@@ -10,7 +10,7 @@ const CONFIG = {
     
     // DOM选择器常量
     SELECTORS: {
-        SETTINGS_MODAL: '#settingsModal',
+        SETTINGS_MODAL: '#calendarSettingModal',
         MODAL_OVERLAY: '#modalOverlay',
         CONFIRM_SETTINGS_BTN: '#confirmSettingsBtn',
         MONTH_PANEL: '#monthPanel',
@@ -28,7 +28,10 @@ const CONFIG = {
         SHOW_COUNT: 'showCount',
         TASK_FONT_SIZE: 'taskFontSize',
         NAV_MENU_ACTIVE_INDEX: 'navMenuActiveIndex',
-        BACKUP_CONFIG: 'backupConfig'
+        BACKUP_CONFIG: 'backupConfig',
+        USERS: 'gms_users',
+        FAMILY_RELATIONS: 'gms_family_relations',
+        CURRENT_USER: 'gms_current_user'
     },
     
     // 样式类名常量
@@ -53,16 +56,171 @@ const DEFAULT_BACKUP_CONFIG = {
 
 // ==================== 主要功能代码 ====================
 
-document.getElementById('confirmSettingsBtn').addEventListener('click', function() {
-    const modal = document.getElementById('settingsModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (modal) modal.style.display = 'none';
-    if (overlay) overlay.style.display = 'none';
-    // 刷新当前视图
-    const today = new Date();
-    renderMonthView(today);
+// 显示消息提示函数
+function showMessage(message, type = 'info') {
+    // 创建消息元素
+    const messageEl = document.createElement('div');
+    messageEl.className = `gms-message gms-message-${type}`;
+    messageEl.textContent = message;
     
-});
+    // 添加样式
+    Object.assign(messageEl.style, {
+        position: 'fixed',
+        top: '80px',
+        right: '20px',
+        padding: '12px 20px',
+        borderRadius: '6px',
+        color: 'white',
+        fontWeight: '500',
+        zIndex: '3000',
+        maxWidth: '300px',
+        wordWrap: 'break-word',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transform: 'translateX(100%)',
+        transition: 'transform 0.3s ease'
+    });
+    
+    // 设置背景色
+    switch (type) {
+        case 'success':
+            messageEl.style.background = '#4CAF50';
+            break;
+        case 'error':
+            messageEl.style.background = '#f44336';
+            break;
+        case 'warning':
+            messageEl.style.background = '#ff9800';
+            break;
+        default:
+            messageEl.style.background = '#2196F3';
+    }
+    
+    // 添加到页面
+    document.body.appendChild(messageEl);
+    
+    // 显示动画
+    setTimeout(() => {
+        messageEl.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // 自动移除
+    setTimeout(() => {
+        messageEl.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (messageEl.parentNode) {
+                messageEl.parentNode.removeChild(messageEl);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// 日历设置确认按钮事件
+const confirmSettingsBtn = document.getElementById('confirmSettingsBtn');
+if (confirmSettingsBtn) {
+    confirmSettingsBtn.addEventListener('click', function() {
+        const modal = document.getElementById('calendarSettingModal');
+        const overlay = document.getElementById('modalOverlay');
+        if (modal) modal.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+        // 刷新当前视图
+        const today = new Date();
+        renderMonthView(today);
+    });
+}
+
+// 系统设置确认按钮事件
+const confirmSystemSettingsBtn = document.getElementById('confirmSystemSettingsBtn');
+if (confirmSystemSettingsBtn) {
+    confirmSystemSettingsBtn.addEventListener('click', function() {
+    // 保存基础积分设置
+    const basePointsInput = document.getElementById('basePointsInput');
+    if (basePointsInput && basePointsInput.value !== null && basePointsInput.value !== undefined) {
+        const basePoints = parseInt(basePointsInput.value) || 5;
+        localStorage.setItem('gms_base_points', basePoints.toString());
+    }
+    
+        const modal = document.getElementById('systemSettingModal');
+        const overlay = document.getElementById('systemModalOverlay');
+        if (modal) modal.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+        // 刷新当前视图
+        const today = new Date();
+        renderMonthView(today);
+    });
+}
+
+// 获取基础积分设置
+function getBasePoints() {
+    try {
+        const basePoints = localStorage.getItem('gms_base_points');
+        return basePoints ? parseInt(basePoints) : 5;
+    } catch (error) {
+        console.error('获取基础积分设置失败:', error);
+        return 5;
+    }
+}
+
+// 显示积分特效
+function showPointsEffect(points) {
+    // 创建特效容器
+    const effectContainer = document.createElement('div');
+    effectContainer.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10000;
+        pointer-events: none;
+        font-size: 78px;
+        font-weight: bold;
+        color: #ffd700;
+        
+        text-shadow: 2px 2px 4px rgb(14, 71, 82);
+        animation: pointsEffect 5s ease-out forwards;
+    `;
+    
+    effectContainer.innerHTML = `⭐+${points} 又赚积分啦`;
+    
+    // 添加CSS动画
+    if (!document.getElementById('pointsEffectStyle')) {
+        const style = document.createElement('style');
+        style.id = 'pointsEffectStyle';
+        style.textContent = `
+            @keyframes pointsEffect {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+                20% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1.2);
+                }
+                40% {
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                80% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 添加到页面
+    document.body.appendChild(effectContainer);
+    
+    // 5秒后移除特效
+    setTimeout(() => {
+        if (effectContainer.parentNode) {
+            effectContainer.parentNode.removeChild(effectContainer);
+        }
+    }, 5000);
+}
 
         // 从localStorage获取项目数据
         function getProjects() {
@@ -104,6 +262,11 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                             if (!subtask.name || typeof subtask.name !== 'string') {
                                 console.warn('子任务缺少有效名称，已跳过:', subtask);
                                 return false;
+                            }
+                            
+                            // 为缺少base_points字段的子任务添加默认值
+                            if (typeof subtask.base_points !== 'number') {
+                                subtask.base_points = getBasePoints();
                             }
                             
                             return true;
@@ -150,49 +313,185 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
         // 收集备份数据
         function collectBackupData() {
             try {
-                // 安全地解析各项数据
-                let projects = [];
-                try {
-                    projects = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PROJECTS) || '[]');
-                    if (!Array.isArray(projects)) projects = [];
-                } catch (e) {
-                    console.error('解析项目数据失败:', e);
-                    projects = [];
+                console.log('🔄 开始收集备份数据...');
+                
+                // 定义数据收集辅助函数
+                function safeParseArray(key, description) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key) || '[]');
+                        if (!Array.isArray(data)) {
+                            console.warn(`${description}数据格式错误，使用空数组`);
+                            return [];
+                        }
+                        console.log(`✅ ${description}: ${data.length} 条记录`);
+                        return data;
+                    } catch (e) {
+                        console.error(`解析${description}失败:`, e);
+                        return [];
+                    }
                 }
                 
-                let tagLibrary = [];
-                try {
-                    tagLibrary = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TAG_LIBRARY) || '[]');
-                    if (!Array.isArray(tagLibrary)) tagLibrary = [];
-                } catch (e) {
-                    console.error('解析标签库数据失败:', e);
-                    tagLibrary = [];
+                function safeParseObject(key, description) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key) || '{}');
+                        if (typeof data !== 'object' || data === null) {
+                            console.warn(`${description}数据格式错误，使用空对象`);
+                            return {};
+                        }
+                        console.log(`✅ ${description}: ${Object.keys(data).length} 个属性`);
+                        return data;
+                    } catch (e) {
+                        console.error(`解析${description}失败:`, e);
+                        return {};
+                    }
                 }
                 
-                let calendarSettings = {};
-                try {
-                    calendarSettings = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CALENDAR_SETTINGS) || '{}');
-                    if (typeof calendarSettings !== 'object' || calendarSettings === null) calendarSettings = {};
-                } catch (e) {
-                    console.error('解析日历设置数据失败:', e);
-                    calendarSettings = {};
+                function safeGetString(key, description) {
+                    const value = localStorage.getItem(key);
+                    console.log(`✅ ${description}: ${value || '未设置'}`);
+                    return value;
                 }
                 
-                return {
-                    timestamp: new Date().toISOString(),
-                    version: '1.0',
+                // === 核心系统数据 ===
+                const coreData = {
+                    projects: safeParseArray(CONFIG.STORAGE_KEYS.PROJECTS, '项目数据'),
+                    tagLibrary: safeParseArray(CONFIG.STORAGE_KEYS.TAG_LIBRARY, '标签库'),
+                    calendarSettings: safeParseObject(CONFIG.STORAGE_KEYS.CALENDAR_SETTINGS, '日历设置'),
+                };
+                
+                // === 用户管理数据 ===
+                const userData = {
+                    users: safeParseArray(CONFIG.STORAGE_KEYS.USERS, '用户数据'),
+                    familyRelations: safeParseArray(CONFIG.STORAGE_KEYS.FAMILY_RELATIONS, '家庭关系'),
+                    currentUser: (() => {
+                        try {
+                            const userStr = localStorage.getItem('gms_current_user');
+                            if (userStr) {
+                                const user = JSON.parse(userStr);
+                                console.log(`✅ 当前用户: ${user.username || '未知'}`);
+                                return user;
+                            }
+                            console.log('✅ 当前用户: 未登录');
+                            return null;
+                        } catch (e) {
+                            console.error('解析当前用户数据失败:', e);
+                            return null;
+                        }
+                    })(),
+                };
+                
+                // === 目标管理数据 ===
+                const goalData = {
+                    microGoals: safeParseArray('gms_micro_goals', '微目标'),
+                    goalProjectLinks: safeParseArray('gms_goal_project_links', '目标项目链接'),
+                    goalTaskLinks: safeParseArray('gms_goal_task_links', '目标任务链接'),
+                    goalCustomTags: safeParseObject('goalCustomTags', '目标自定义标签'),
+                    objectiveRecords: safeParseArray('objective_records', '目标记录'),
+                };
+                
+                // === 流程管理数据 ===
+                const processData = {
+                    processDimensions: safeParseArray('gms_process_dimensions', '流程维度'),
+                    dimensionValues: safeParseArray('gms_dimension_values', '维度值'),
+                    dimensionSelection: safeParseArray('gms_dimension_selection', '维度选择'),
+                    milestones: safeParseArray('gms_milestones', '里程碑'),
+                    milestoneDimensionRelations: safeParseArray('gms_milestone_dimension_relations', '里程碑维度关系'),
+                };
+                
+                // === 路径管理数据 ===
+                const pathData = {
+                    userPaths: safeParseArray('gms_user_paths', '用户路径'),
+                    pathDimensions: safeParseArray('gms_path_dimensions', '路径维度'),
+                    pathGoals: safeParseArray('gms_path_goals', '路径目标'),
+                };
+                
+                // === 积分兑换数据 ===
+                const pointsData = {
+                    basePoints: safeGetString('gms_base_points', '基础积分'),
+                    products: safeParseArray('gms_products', '产品数据'),
+                    redeemHistory: safeParseArray('redeemHistory', '兑换历史'),
+                };
+                
+                // === 学习计划数据 ===
+                const studyData = {
+                    razPrepData: safeParseObject('razPrepData', 'RAZ学习计划'),
+                    mathCourseProgress: safeParseObject('mathCourseProgress', '数学课程进度'),
+                    razKetProgress: safeParseObject('raz-ket-progress', 'RAZ-KET进度'),
+                    mathProblems: safeParseArray('mathProblems', '数学题目'),
+                    taskData: safeParseObject('taskData', '任务数据'),
+                };
+                
+                // === 系统设置数据 ===
+                const settingsData = {
+                    showTime: safeGetString(CONFIG.STORAGE_KEYS.SHOW_TIME, '显示时间设置'),
+                    showCount: safeGetString(CONFIG.STORAGE_KEYS.SHOW_COUNT, '显示计数设置'),
+                    taskFontSize: safeGetString(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE, '任务字体大小'),
+                    navMenuActiveIndex: safeGetString(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX, '导航菜单激活索引'),
+                    backupConfig: safeParseObject('gms_backup_config', '备份配置'),
+                };
+                
+                // === 其他数据 ===
+                const otherData = {
+                    // 检查是否有其他未分类的数据
+                    milestoneGoalRelations: safeParseArray('gms_milestone_goal_relations', '里程碑目标关系'),
+                    gmsUsers: safeParseArray('gms_users', 'GMS用户数据'),
+                    gmsFamilyRelations: safeParseArray('gms_family_relations', 'GMS家庭关系'),
+                    gmsProjects: safeParseArray('gms_projects', 'GMS项目数据'),
+                };
+                
+                // 统计数据量
+                const totalItems = [
+                    ...Object.values(coreData),
+                    ...Object.values(userData),
+                    ...Object.values(goalData),
+                    ...Object.values(processData),
+                    ...Object.values(pathData),
+                    ...Object.values(pointsData),
+                    ...Object.values(studyData),
+                    ...Object.values(otherData)
+                ].reduce((total, item) => {
+                    if (Array.isArray(item)) return total + item.length;
+                    if (typeof item === 'object' && item !== null) return total + Object.keys(item).length;
+                    return total + (item ? 1 : 0);
+                }, 0);
+                
+                console.log(`📊 备份数据统计: 共 ${totalItems} 项数据`);
+                
+                // 构建备份数据结构
+                const backupData = {
+                    // 备份元数据
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        version: '3.0',
+                        description: 'GMS成长系统完整数据备份',
+                        totalItems: totalItems,
+                        backupSource: 'manual',
+                        systemInfo: {
+                            userAgent: navigator.userAgent,
+                            language: navigator.language,
+                            platform: navigator.platform
+                        }
+                    },
+                    
+                    // 分类数据
                     data: {
-                        projects,
-                        tagLibrary,
-                        calendarSettings,
-                        showTime: localStorage.getItem(CONFIG.STORAGE_KEYS.SHOW_TIME),
-                        showCount: localStorage.getItem(CONFIG.STORAGE_KEYS.SHOW_COUNT),
-                        taskFontSize: localStorage.getItem(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE),
-                        navMenuActiveIndex: localStorage.getItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX)
+                        core: coreData,
+                        user: userData,
+                        goal: goalData,
+                        process: processData,
+                        path: pathData,
+                        points: pointsData,
+                        study: studyData,
+                        settings: settingsData,
+                        other: otherData
                     }
                 };
+                
+                console.log('✅ 备份数据收集完成');
+                return backupData;
+                
             } catch (error) {
-                console.error('收集备份数据失败:', error);
+                console.error('❌ 收集备份数据失败:', error);
                 return null;
             }
         }
@@ -298,43 +597,193 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             }
         }
         
+        // 验证备份数据完整性
+        function validateBackupData(backupData) {
+            try {
+                console.log('🔍 开始验证备份数据完整性...');
+                
+                const validationResults = {
+                    isValid: true,
+                    errors: [],
+                    warnings: [],
+                    summary: {}
+                };
+                
+                // 检查基本结构
+                if (!backupData || typeof backupData !== 'object') {
+                    validationResults.errors.push('备份数据格式无效');
+                    validationResults.isValid = false;
+                    return validationResults;
+                }
+                
+                // 检查元数据
+                if (!backupData.metadata) {
+                    validationResults.errors.push('缺少备份元数据');
+                    validationResults.isValid = false;
+                } else {
+                    if (!backupData.metadata.timestamp) {
+                        validationResults.warnings.push('缺少备份时间戳');
+                    }
+                    if (!backupData.metadata.version) {
+                        validationResults.warnings.push('缺少备份版本信息');
+                    }
+                }
+                
+                // 检查数据结构
+                if (!backupData.data) {
+                    validationResults.errors.push('缺少备份数据内容');
+                    validationResults.isValid = false;
+                } else {
+                    const expectedCategories = ['core', 'user', 'goal', 'process', 'path', 'points', 'study', 'settings', 'other'];
+                    const actualCategories = Object.keys(backupData.data);
+                    
+                    // 检查必要的数据分类
+                    const missingCategories = expectedCategories.filter(cat => !actualCategories.includes(cat));
+                    if (missingCategories.length > 0) {
+                        validationResults.warnings.push(`缺少数据分类: ${missingCategories.join(', ')}`);
+                    }
+                    
+                    // 统计各分类数据量
+                    validationResults.summary = {};
+                    actualCategories.forEach(category => {
+                        const categoryData = backupData.data[category];
+                        if (categoryData && typeof categoryData === 'object') {
+                            const itemCount = Object.keys(categoryData).reduce((count, key) => {
+                                const item = categoryData[key];
+                                if (Array.isArray(item)) return count + item.length;
+                                if (typeof item === 'object' && item !== null) return count + Object.keys(item).length;
+                                return count + (item ? 1 : 0);
+                            }, 0);
+                            validationResults.summary[category] = itemCount;
+                        }
+                    });
+                }
+                
+                // 检查关键数据是否存在
+                const criticalData = [
+                    'core.projects',
+                    'user.users',
+                    'settings.backupConfig'
+                ];
+                
+                criticalData.forEach(path => {
+                    const [category, key] = path.split('.');
+                    if (backupData.data && backupData.data[category] && backupData.data[category][key] === undefined) {
+                        validationResults.warnings.push(`关键数据可能缺失: ${path}`);
+                    }
+                });
+                
+                console.log('✅ 备份数据验证完成', validationResults);
+                return validationResults;
+                
+            } catch (error) {
+                console.error('❌ 备份数据验证失败:', error);
+                return {
+                    isValid: false,
+                    errors: [`验证过程出错: ${error.message}`],
+                    warnings: [],
+                    summary: {}
+                };
+            }
+        }
+        
+        // 生成备份文件名
+        function generateBackupFileName(backupData) {
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+            
+            let fileName = `GMS-完整备份-${dateStr}-${timeStr}`;
+            
+            // 添加版本信息
+            if (backupData.metadata && backupData.metadata.version) {
+                fileName += `-v${backupData.metadata.version}`;
+            }
+            
+            // 添加数据量信息
+            if (backupData.metadata && backupData.metadata.totalItems) {
+                fileName += `-${backupData.metadata.totalItems}项`;
+            }
+            
+            // 添加备份来源
+            if (backupData.metadata && backupData.metadata.backupSource) {
+                fileName += `-${backupData.metadata.backupSource}`;
+            }
+            
+            return fileName + '.json';
+        }
+        
         // 手动下载备份（总是下载模式）
         function manualDownloadBackup() {
+            console.log('🚀 开始手动备份流程...');
+            
             try {
+                // 收集备份数据
                 const backupData = collectBackupData();
                 if (!backupData) {
-                    console.warn('备份数据为空，跳过备份');
+                    const errorMsg = '❌ 备份数据收集失败，请检查控制台错误信息';
+                    console.error(errorMsg);
+                    showBackupStatus(errorMsg);
+                    alert(errorMsg);
                     return;
                 }
+                
+                // 验证备份数据
+                const validation = validateBackupData(backupData);
+                if (!validation.isValid) {
+                    const errorMsg = `❌ 备份数据验证失败:\n${validation.errors.join('\n')}`;
+                    console.error(errorMsg);
+                    showBackupStatus('❌ 备份数据验证失败');
+                    alert(errorMsg);
+                    return;
+                }
+                
+                // 显示验证结果
+                if (validation.warnings.length > 0) {
+                    console.warn('⚠️ 备份验证警告:', validation.warnings);
+                }
+                
+                console.log('📊 备份数据摘要:', validation.summary);
 
                 const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-                    type: 'application/json'
+                    type: 'application/json;charset=utf-8'
                 });
                 
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 
-                // 生成文件名：学习计划备份_YYYY-MM-DD_HH-MM-SS.json
-                const now = new Date();
-                const date = now.toISOString().slice(0, 10);
-                const time = now.toTimeString().slice(0, 8).replace(/:/g, '-');
-                const fileName = `学习计划备份_${date}_${time}.json`;
-                
+                // 生成文件名
+                const fileName = generateBackupFileName(backupData);
                 a.download = fileName;
+                a.style.display = 'none';
                 
                 // 触发下载
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url);
                 
-                console.log(`✅ 手动备份完成: ${fileName}`);
+                // 清理URL对象
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 1000);
+                
+                const successMsg = `✅ 备份文件已成功下载: ${fileName}`;
+                console.log(successMsg);
                 showBackupStatus('✅ 手动备份完成');
                 
+                // 显示成功信息给用户
+                const summaryText = Object.entries(validation.summary)
+                    .map(([category, count]) => `${category}: ${count}项`)
+                    .join(', ');
+                
+                alert(`备份完成！\n文件名: ${fileName}\n数据统计: ${summaryText}\n总计: ${backupData.metadata.totalItems}项数据`);
+                
             } catch (error) {
-                console.error('手动备份失败:', error);
+                const errorMsg = `❌ 手动备份失败: ${error.message}`;
+                console.error(errorMsg, error);
                 showBackupStatus('❌ 手动备份失败');
+                alert(errorMsg);
             }
         }
         
@@ -674,6 +1123,175 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             updateStatsCards();
         }
 
+        // ==================== 用户数据管理功能 ====================
+        
+        // 获取用户数据
+        function getUsers() {
+            try {
+                const usersJson = localStorage.getItem(CONFIG.STORAGE_KEYS.USERS) || '[]';
+                const users = JSON.parse(usersJson);
+                
+                // 确保返回的是数组
+                if (!Array.isArray(users)) {
+                    console.error('getUsers: 存储的数据不是数组格式', users);
+                    return [];
+                }
+                
+                // 验证用户数据结构
+                const validatedUsers = users.map(user => {
+                    if (!user || typeof user !== 'object') {
+                        console.warn('发现无效的用户数据，已跳过:', user);
+                        return null;
+                    }
+                    
+                    // 确保基本属性存在
+                    const validatedUser = {
+                        user_id: user.user_id || Date.now().toString(),
+                        username: user.username || '',
+                        password_hash: user.password_hash || '',
+                        role: user.role || 'child',
+                        parent_id: user.parent_id || null,
+                        total_points: user.total_points || 0,
+                        created_at: user.created_at || new Date().toISOString(),
+                        // 新增Process相关字段
+                        birth_date: user.birth_date || null, // 出生日期 YYYY-MM-DD
+                        current_grade_value_id: user.current_grade_value_id || null, // 关联年级维度值ID
+                        active_path_id: user.active_path_id || null, // 当前活跃路径ID
+                        ...user
+                    };
+                    
+                    return validatedUser;
+                }).filter(user => user !== null);
+                
+                return validatedUsers;
+            } catch (error) {
+                console.error('getUsers: 解析用户数据失败', error);
+                return [];
+            }
+        }
+        
+        // 保存用户数据
+        function saveUsers(users) {
+            // 添加安全检查，防止保存undefined或null
+            if (!users || !Array.isArray(users)) {
+                console.error('saveUsers: 无效的users参数', users);
+                return;
+            }
+            localStorage.setItem(CONFIG.STORAGE_KEYS.USERS, JSON.stringify(users));
+            
+            // 触发自动备份
+            triggerAutoBackup();
+            
+            // 更新存储使用量显示
+            updateStorageUsageDisplay();
+        }
+        
+        // 获取家庭关系数据
+        function getFamilyRelations() {
+            try {
+                const relationsJson = localStorage.getItem(CONFIG.STORAGE_KEYS.FAMILY_RELATIONS) || '[]';
+                const relations = JSON.parse(relationsJson);
+                
+                // 确保返回的是数组
+                if (!Array.isArray(relations)) {
+                    console.error('getFamilyRelations: 存储的数据不是数组格式', relations);
+                    return [];
+                }
+                
+                // 验证家庭关系数据结构
+                const validatedRelations = relations.map(relation => {
+                    if (!relation || typeof relation !== 'object') {
+                        console.warn('发现无效的家庭关系数据，已跳过:', relation);
+                        return null;
+                    }
+                    
+                    // 确保基本属性存在
+                    const validatedRelation = {
+                        family_id: relation.family_id || Date.now().toString(),
+                        parent_id: relation.parent_id || '',
+                        child_id: relation.child_id || '',
+                        points_pool: relation.points_pool || 0,
+                        permissions: relation.permissions || {},
+                        ...relation
+                    };
+                    
+                    return validatedRelation;
+                }).filter(relation => relation !== null);
+                
+                return validatedRelations;
+            } catch (error) {
+                console.error('getFamilyRelations: 解析家庭关系数据失败', error);
+                return [];
+            }
+        }
+        
+        // 保存家庭关系数据
+        function saveFamilyRelations(relations) {
+            // 添加安全检查，防止保存undefined或null
+            if (!relations || !Array.isArray(relations)) {
+                console.error('saveFamilyRelations: 无效的relations参数', relations);
+                return;
+            }
+            localStorage.setItem(CONFIG.STORAGE_KEYS.FAMILY_RELATIONS, JSON.stringify(relations));
+            
+            // 触发自动备份
+            triggerAutoBackup();
+            
+            // 更新存储使用量显示
+            updateStorageUsageDisplay();
+        }
+        
+        // 获取当前登录用户
+        function getCurrentUser() {
+            try {
+                const currentUserJson = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_USER) || 
+                                      sessionStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+                if (!currentUserJson) {
+                    return null;
+                }
+                
+                const currentUser = JSON.parse(currentUserJson);
+                if (!currentUser || typeof currentUser !== 'object') {
+                    return null;
+                }
+                
+                return currentUser;
+            } catch (error) {
+                console.error('getCurrentUser: 解析当前用户数据失败', error);
+                return null;
+            }
+        }
+        
+        // 设置当前登录用户
+        function setCurrentUser(user, remember = false) {
+            if (!user || typeof user !== 'object') {
+                console.error('setCurrentUser: 无效的user参数', user);
+                return;
+            }
+            
+            if (remember) {
+                localStorage.setItem(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+            } else {
+                sessionStorage.setItem(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+            }
+        }
+        
+        // 清除当前登录用户
+        function clearCurrentUser() {
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+            sessionStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+        }
+        
+        // ==================== 暴露用户数据管理函数到全局作用域 ====================
+        // 供auth.js等其他模块调用
+        window.getUsers = getUsers;
+        window.saveUsers = saveUsers;
+        window.getFamilyRelations = getFamilyRelations;
+        window.saveFamilyRelations = saveFamilyRelations;
+        window.getCurrentUser = getCurrentUser;
+        window.setCurrentUser = setCurrentUser;
+        window.clearCurrentUser = clearCurrentUser;
+
         // 格式化日期为YYYY-MM-DD
         function formatDate(date) {
             const year = date.getFullYear();
@@ -740,7 +1358,8 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 // 如果没有数据，创建默认数据
                 settingsData = {
                     holidays: defaultHolidays,
-                    temporaryPlans: []
+                    temporaryPlans: [],
+                    courses: []
                 };
                 needsUpdate = true;
             } else {
@@ -755,6 +1374,9 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                     if (!settingsData.temporaryPlans) {
                         settingsData.temporaryPlans = [];
                     }
+                    if (!settingsData.courses) {
+                        settingsData.courses = [];
+                    }
                     
                     // 如果节假日列表为空，添加默认节假日
                     if (settingsData.holidays.length === 0) {
@@ -765,7 +1387,8 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                     console.error('解析设置数据失败，使用默认数据:', e);
                     settingsData = {
                         holidays: defaultHolidays,
-                        temporaryPlans: []
+                        temporaryPlans: [],
+                        courses: []
                     };
                     needsUpdate = true;
                 }
@@ -781,7 +1404,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             try {
                 const data = localStorage.getItem(CONFIG.STORAGE_KEYS.CALENDAR_SETTINGS);
                 if (!data) {
-                    return { holidays: [], temporaryPlans: [] };
+                    return { holidays: [], temporaryPlans: [], courses: [] };
                 }
                 
                 const parsedData = JSON.parse(data);
@@ -828,7 +1451,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             } catch (e) {
                 console.error('Failed to parse settings data:', e);
                 // 数据解析失败时返回默认值
-                return { holidays: [], temporaryPlans: [] };
+                return { holidays: [], temporaryPlans: [], courses: [] };
             }
         }
 
@@ -968,15 +1591,93 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             });
         }
 
+        // 渲染课程列表
+        function renderCoursesList() {
+            const coursesList = document.getElementById('coursesList');
+            if (!coursesList) {
+                return;
+            }
+            
+            const { courses } = getSettingsData();
+            coursesList.innerHTML = '';
+
+            if (!courses || courses.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.color = '#666';
+                emptyMessage.style.fontSize = '14px';
+                emptyMessage.style.padding = '20px';
+                emptyMessage.textContent = '暂无课程设置';
+                coursesList.appendChild(emptyMessage);
+                return;
+            }
+
+            const dayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+
+            courses.forEach((course, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.flexDirection = 'column';
+                item.style.padding = '10px';
+                item.style.border = '1px solid #eee';
+                item.style.borderRadius = '4px';
+                item.style.marginBottom = '10px';
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>${course.name}</strong>
+                        <div>
+                            <button class="edit-course" data-index="${index}" style="background: #4a89dc; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; margin-right: 5px;">编辑</button>
+                            <button class="delete-course" data-index="${index}" style="background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer;">删除</button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 14px;">
+                        <div>${dayNames[course.day]} ${course.startTime}-${course.endTime}</div>
+                        ${course.location ? `<div>地点: ${course.location}</div>` : ''}
+                        ${course.teacher ? `<div>教师: ${course.teacher}</div>` : ''}
+                    </div>
+                `;
+                coursesList.appendChild(item);
+            });
+
+            // 绑定编辑和删除事件
+            coursesList.addEventListener('click', function(e) {
+                if (e.target.classList.contains('delete-course')) {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    if (confirm('确定要删除这个课程吗？')) {
+                        const data = getSettingsData();
+                        data.courses.splice(index, 1);
+                        saveSettingsData(data);
+                        renderCoursesList();
+                    }
+                } else if (e.target.classList.contains('edit-course')) {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    const course = courses[index];
+                    
+                    // 填充编辑表单
+                    document.getElementById('courseName').value = course.name;
+                    document.getElementById('courseDay').value = course.day;
+                    document.getElementById('courseStartTime').value = course.startTime;
+                    document.getElementById('courseEndTime').value = course.endTime;
+                    document.getElementById('courseLocation').value = course.location || '';
+                    document.getElementById('courseTeacher').value = course.teacher || '';
+                    
+                    // 设置编辑模式
+                    const addCourseBtn = document.getElementById('addCourseBtn');
+                    addCourseBtn.textContent = '更新课程';
+                    addCourseBtn.setAttribute('data-edit-index', index);
+                }
+            });
+        }
+
         // 初始化设置弹窗
         function initSettingsModal() {
             // 初始化数据
             initSettingsData();
             
             // 获取元素
-            const modal = document.getElementById('settingsModal');
+            const modal = document.getElementById('calendarSettingModal');
             const overlay = document.getElementById('modalOverlay');
-            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsBtn = document.getElementById('calendarsettingBtn');
             const closeBtn = document.getElementById('closeSettingsBtn');
             const tabBtns = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
@@ -991,7 +1692,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             if (!settingsBtn) {
                 // 延迟重试，因为settingsBtn可能动态创建
                 setTimeout(() => {
-                    const retrySettingsBtn = document.getElementById('settingsBtn');
+                    const retrySettingsBtn = document.getElementById('calendarsettingBtn');
                     if (retrySettingsBtn) {
                         bindSettingsButtonEvent(retrySettingsBtn, modal, overlay);
                     }
@@ -1016,6 +1717,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 initSettingsData();
                 renderHolidaysList();
                 renderTemporaryPlans();
+                renderCoursesList();
                 // 初始化自动备份设置
                 initAutoBackupSettings();
             }, 100);
@@ -1037,51 +1739,71 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 document.getElementById('planEndTime').value = '';
             }
 
-            closeBtn.addEventListener('click', closeModal);
-            overlay.addEventListener('click', closeModal);
+            // 关闭按钮事件绑定（避免重复绑定）
+            if (closeBtn && !closeBtn.hasAttribute('data-event-bound')) {
+                closeBtn.setAttribute('data-event-bound', 'true');
+                closeBtn.addEventListener('click', closeModal);
+            }
+            if (overlay && !overlay.hasAttribute('data-event-bound')) {
+                overlay.setAttribute('data-event-bound', 'true');
+                overlay.addEventListener('click', closeModal);
+            }
 
-            // 标签页切换
+            // 标签页切换（避免重复绑定）
             tabBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const tab = this.getAttribute('data-tab');
-                    
-                    // 更新按钮样式
-                    tabBtns.forEach(b => {
-                        b.classList.remove('active');
-                        b.style.color = '#666';
+                if (!btn.hasAttribute('data-event-bound')) {
+                    btn.setAttribute('data-event-bound', 'true');
+                    btn.addEventListener('click', function() {
+                        const tab = this.getAttribute('data-tab');
+                        
+                        // 更新按钮样式
+                        tabBtns.forEach(b => {
+                            b.classList.remove('active');
+                            b.style.color = '#666';
+                        });
+                        this.classList.add('active');
+                        this.style.color = '#50b767';
+                        
+                        // 显示对应内容
+                        tabContents.forEach(content => {
+                            content.style.display = 'none';
+                        });
+                        document.getElementById(`${tab}Content`).style.display = 'block';
                     });
-                    this.classList.add('active');
-                    this.style.color = '#50b767';
-                    
-                    // 显示对应内容
-                    tabContents.forEach(content => {
-                        content.style.display = 'none';
-                    });
-                    document.getElementById(`${tab}Content`).style.display = 'block';
-                });
-            });
-
-            // 添加节假日
-            addHolidayBtn.addEventListener('click', function() {
-                const dateInput = document.getElementById('holidayDate');
-                const nameInput = document.getElementById('holidayName');
-                const date = dateInput.value.trim();
-                const name = nameInput.value.trim();
-
-                if (date && name && /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(date)) {
-                    const data = getSettingsData();
-                    data.holidays.push({ date, name });
-                    saveSettingsData(data);
-                    renderHolidaysList();
-                    dateInput.value = '';
-                    nameInput.value = '';
-                } else {
-                    alert('请输入有效的日期(MM-DD)和节假日名称');
                 }
             });
 
-            // 刷新节假日列表
-            if (refreshHolidaysBtn) {
+            // 添加节假日（避免重复绑定事件）
+            if (addHolidayBtn && !addHolidayBtn.hasAttribute('data-event-bound')) {
+                addHolidayBtn.setAttribute('data-event-bound', 'true');
+                addHolidayBtn.addEventListener('click', function() {
+                    const dateInput = document.getElementById('holidayDate');
+                    const nameInput = document.getElementById('holidayName');
+                    
+                    if (!dateInput || !nameInput) {
+                        console.error('节假日输入元素未找到');
+                        return;
+                    }
+                    
+                    const date = dateInput.value.trim();
+                    const name = nameInput.value.trim();
+
+                    if (date && name && /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(date)) {
+                        const data = getSettingsData();
+                        data.holidays.push({ date, name });
+                        saveSettingsData(data);
+                        renderHolidaysList();
+                        dateInput.value = '';
+                        nameInput.value = '';
+                    } else {
+                        alert('请输入有效的日期(MM-DD)和节假日名称');
+                    }
+                });
+            }
+
+            // 刷新节假日列表（避免重复绑定事件）
+            if (refreshHolidaysBtn && !refreshHolidaysBtn.hasAttribute('data-event-bound')) {
+                refreshHolidaysBtn.setAttribute('data-event-bound', 'true');
                 refreshHolidaysBtn.addEventListener('click', function() {
                     initSettingsData();
                     renderHolidaysList();
@@ -1090,49 +1812,117 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
 
 
 
-            // 添加或更新临时计划
-            addPlanBtn.addEventListener('click', function() {
-                const nameInput = document.getElementById('planName');
-                const dateInput = document.getElementById('planDate');
-                const startTimeInput = document.getElementById('planStartTime');
-                const endTimeInput = document.getElementById('planEndTime');
-                
-                const name = nameInput.value.trim();
-                const date = dateInput.value;
-                const startTime = startTimeInput.value;
-                const endTime = endTimeInput.value;
-                
-                if (name && date && startTime && endTime) {
-                    const data = getSettingsData();
-                    const editIndex = this.getAttribute('data-edit-index');
+            // 添加或更新临时计划（避免重复绑定事件）
+            if (addPlanBtn && !addPlanBtn.hasAttribute('data-event-bound')) {
+                addPlanBtn.setAttribute('data-event-bound', 'true');
+                addPlanBtn.addEventListener('click', function() {
+                    const nameInput = document.getElementById('planName');
+                    const dateInput = document.getElementById('planDate');
+                    const startTimeInput = document.getElementById('planStartTime');
+                    const endTimeInput = document.getElementById('planEndTime');
                     
-                    if (editIndex !== null) {
-                        // 更新现有计划
-                        data.temporaryPlans[editIndex] = {
-                            ...data.temporaryPlans[editIndex],
-                            name, date, startTime, endTime
-                        };
-                        this.removeAttribute('data-edit-index');
-                        this.textContent = '添加计划';
-                    } else {
-                        // 添加新计划
-                        data.temporaryPlans.push({
-                            name, date, startTime, endTime, status: '未完成'
-                        });
+                    if (!nameInput || !dateInput || !startTimeInput || !endTimeInput) {
+                        console.error('临时计划输入元素未找到');
+                        return;
                     }
                     
-                    saveSettingsData(data);
-                    renderTemporaryPlans();
+                    const name = nameInput.value.trim();
+                    const date = dateInput.value;
+                    const startTime = startTimeInput.value;
+                    const endTime = endTimeInput.value;
                     
-                    // 清空表单
-                    nameInput.value = '';
-                    dateInput.value = '';
-                    startTimeInput.value = '';
-                    endTimeInput.value = '';
-                } else {
-                    alert('请填写所有计划字段');
-                }
-            });
+                    if (name && date && startTime && endTime) {
+                        const data = getSettingsData();
+                        const editIndex = this.getAttribute('data-edit-index');
+                        
+                        if (editIndex !== null) {
+                            // 更新现有计划
+                            data.temporaryPlans[editIndex] = {
+                                ...data.temporaryPlans[editIndex],
+                                name, date, startTime, endTime
+                            };
+                            this.removeAttribute('data-edit-index');
+                            this.textContent = '添加计划';
+                        } else {
+                            // 添加新计划
+                            data.temporaryPlans.push({
+                                name, date, startTime, endTime, status: '未完成'
+                            });
+                        }
+                        
+                        saveSettingsData(data);
+                        renderTemporaryPlans();
+                        
+                        // 清空表单
+                        nameInput.value = '';
+                        dateInput.value = '';
+                        startTimeInput.value = '';
+                        endTimeInput.value = '';
+                    } else {
+                        alert('请填写所有计划字段');
+                    }
+                });
+            }
+
+            // 课程管理相关事件绑定
+            const addCourseBtn = document.getElementById('addCourseBtn');
+            
+            // 添加或更新课程（避免重复绑定事件）
+            if (addCourseBtn && !addCourseBtn.hasAttribute('data-event-bound')) {
+                addCourseBtn.setAttribute('data-event-bound', 'true');
+                addCourseBtn.addEventListener('click', function() {
+                    const nameInput = document.getElementById('courseName');
+                    const dayInput = document.getElementById('courseDay');
+                    const startTimeInput = document.getElementById('courseStartTime');
+                    const endTimeInput = document.getElementById('courseEndTime');
+                    const locationInput = document.getElementById('courseLocation');
+                    const teacherInput = document.getElementById('courseTeacher');
+                    
+                    if (!nameInput || !dayInput || !startTimeInput || !endTimeInput || !locationInput || !teacherInput) {
+                        console.error('课程输入元素未找到');
+                        return;
+                    }
+                    
+                    const name = nameInput.value.trim();
+                    const day = dayInput.value;
+                    const startTime = startTimeInput.value;
+                    const endTime = endTimeInput.value;
+                    const location = locationInput.value.trim();
+                    const teacher = teacherInput.value.trim();
+                    
+                    if (name && day !== '' && startTime && endTime) {
+                        const data = getSettingsData();
+                        const editIndex = this.getAttribute('data-edit-index');
+                        
+                        if (editIndex !== null) {
+                            // 更新现有课程
+                            data.courses[editIndex] = {
+                                name, day, startTime, endTime, location, teacher
+                            };
+                            this.removeAttribute('data-edit-index');
+                            this.textContent = '添加课程';
+                        } else {
+                            // 添加新课程
+                            data.courses.push({
+                                name, day, startTime, endTime, location, teacher
+                            });
+                        }
+                        
+                        saveSettingsData(data);
+                        renderCoursesList();
+                        
+                        // 清空表单
+                        nameInput.value = '';
+                        dayInput.value = '';
+                        startTimeInput.value = '';
+                        endTimeInput.value = '';
+                        locationInput.value = '';
+                        teacherInput.value = '';
+                    } else {
+                        alert('请填写课程名称、星期、开始时间和结束时间');
+                    }
+                });
+            }
         }
 
         // 任务完成确认弹窗
@@ -1173,9 +1963,9 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                                 <!-- 操作选择按钮区域 -->
                                 <div id="action-buttons-area" class="action-buttons-container">
                                     <div class="action-buttons">
-                                        <button id="modifyTaskBtn" class="action-btn">修改任务</button>
-                                        <button id="markCompleteBtn" class="action-btn">标记完成</button>
-                                        <button id="cancelPlanBtn" class="action-btn">取消计划</button>
+                                        <button id="modifyTaskBtn" class="action-btn-1">修改任务</button>
+                                        <button id="markCompleteBtn" class="action-btn-1">标记完成</button>
+                                        <button id="cancelPlanBtn" class="action-btn-1">取消计划</button>
                                     </div>
                                     <p class="action-warning">⚠️ 请选择上面按钮点击后确认！</p>
                                 </div>
@@ -1823,12 +2613,25 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             // 编辑保存按钮事件
             modal.querySelector('#editSaveBtn').addEventListener('click', function() {
                 try {
-                    const taskName = modal.querySelector('#editTaskName').value;
-                    const status = parseInt(modal.querySelector('input[name="status"]:checked').value);
-                    const completeTime = modal.querySelector('#editCompleteTime').value;
-                    const startTime = modal.querySelector('#editStartTime').value;
-                    const endTime = modal.querySelector('#editEndTime').value;
-                    const consumingTime = parseInt(modal.querySelector('#editConsumingTime').value);
+                    const taskNameElement = modal.querySelector('#editTaskName');
+                    const statusElement = modal.querySelector('input[name="status"]:checked');
+                    const completeTimeElement = modal.querySelector('#editCompleteTime');
+                    const startTimeElement = modal.querySelector('#editStartTime');
+                    const endTimeElement = modal.querySelector('#editEndTime');
+                    const consumingTimeElement = modal.querySelector('#editConsumingTime');
+                    
+                    if (!taskNameElement || !statusElement || !completeTimeElement || !startTimeElement || !endTimeElement || !consumingTimeElement) {
+                        console.error('编辑任务弹窗元素未找到');
+                        alert('弹窗元素加载失败，请重试');
+                        return;
+                    }
+                    
+                    const taskName = taskNameElement ? taskNameElement.value : '';
+                    const status = statusElement ? parseInt(statusElement.value) : 0;
+                    const completeTime = completeTimeElement ? completeTimeElement.value : '';
+                    const startTime = startTimeElement ? startTimeElement.value : '';
+                    const endTime = endTimeElement ? endTimeElement.value : '';
+                    const consumingTime = consumingTimeElement ? parseInt(consumingTimeElement.value) : 0;
 
                     if (!taskName || !completeTime || isNaN(consumingTime) || consumingTime <= 0) {
                         alert('请填写必要的任务信息');
@@ -1932,9 +2735,19 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             confirmBtn.addEventListener('click', function() {
                 console.log('确认按钮被点击');
                 try {
-                    const endTime = modal.querySelector('#modalEndTime').value;
-                    const completeTime = modal.querySelector('#modalCompleteTime').value;
-                    const taskDuration = modal.querySelector('#modalTaskDuration').value;
+                    const endTimeElement = modal.querySelector('#modalEndTime');
+                    const completeTimeElement = modal.querySelector('#modalCompleteTime');
+                    const taskDurationElement = modal.querySelector('#modalTaskDuration');
+                    
+                    if (!endTimeElement || !completeTimeElement || !taskDurationElement) {
+                        console.error('任务完成确认弹窗元素未找到');
+                        alert('弹窗元素加载失败，请重试');
+                        return;
+                    }
+                    
+                    const endTime = endTimeElement ? endTimeElement.value : '';
+                    const completeTime = completeTimeElement ? completeTimeElement.value : '';
+                    const taskDuration = taskDurationElement ? taskDurationElement.value : '';
                     if (!endTime || !completeTime || !taskDuration) {
                         alert('请选择完成日期、时间和任务用时');
                         return;
@@ -2692,38 +3505,76 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             // 检查是否是dayPanel（月视图中的日面板）
             const isDayPanel = container.id === 'dayPanel';
             
+            // 检查添加计划按钮的当前状态（在所有情况下都定义）
+            const currentAddTaskIcon = container.querySelector('.add-task-icon');
+            const isPickerMode = currentAddTaskIcon && currentAddTaskIcon.classList.contains('picker-mode');
+            
+            // 检查用户是否已登录
+            const isLoggedIn = window.userManager && window.userManager.isLoggedIn();
+            
             if (isDayPanel) {
                 // 如果是dayPanel，只显示标题和内容，不显示按钮
                 const dateObj = new Date(today);
                 const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                 const day = String(dateObj.getDate()).padStart(2, '0');
                 
-                // 保留预览区域，只更新主要内容
+                // 保留预览区域和任务选择器状态
                 const existingPreview = container.querySelector('#tempPreviewSection');
+                const existingGreenPreview = container.querySelector('.green-preview-box');
                 const previewHTML = existingPreview ? existingPreview.outerHTML : '';
+                const greenPreviewHTML = existingGreenPreview ? existingGreenPreview.outerHTML : '';
                 
-                container.innerHTML = `
-                    <h2 style="margin: 0; margin-bottom: 15px;"> ${month}-${day} 任务</h2>
-                    <div id="day-content"></div>
-                    <div class="add-task-icon" id="addTaskIcon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="#50b767" class="icon icon-tabler icons-tabler-filled icon-tabler-square-rounded-plus">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                            <path d="M12 2l.324 .001l.318 .004l.616 .017l.299 .013l.579 .034l.553 .046c4.785 .464 6.732 2.411 7.196 7.196l.046 .553l.034 .579c.005 .098 .01 .198 .013 .299l.017 .616l.005 .642l-.005 .642l-.017 .616l-.013 .299l-.034 .579l-.046 .553c-.464 4.785 -2.411 6.732 -7.196 7.196l-.553 .046l-.579 .034c-.098 .005 -.198 .01 -.299 .013l-.616 .017l-.642 .005l-.642 -.005l-.616 -.017l-.299 -.013l-.579 -.034l-.553 -.046c-4.785 -.464 -6.732 -2.411 -7.196 -7.196l-.046 -.553l-.034 -.579a28.058 28.058 0 0 1 -.013 -.299l-.017 -.616c-.003 -.21 -.005 -.424 -.005 -.642l.001 -.324l.004 -.318l.017 -.616l.013 -.299l.034 -.579l.046 -.553c.464 -4.785 2.411 -6.732 7.196 -7.196l.553 -.046l.579 -.034c.098 -.005 .198 -.01 .299 -.013l.616 -.017c.21 -.003 .424 -.005 .642 -.005zm0 6a1 1 0 0 0 -1 1v2h-2l-.117 .007a1 1 0 0 0 .117 1.993h2v2l.007 .117a1 1 0 0 0 1.993 -.117v-2h2l.117 -.007a1 1 0 0 0 -.117 -1.993h-2v-2l-.007 -.117a1 1 0 0 0 -.993 -.883z" fill="#50b767" stroke-width="0" />
-                        </svg>
-                        <div class="text-button">添加计划</div>
-                    </div>
-                    ${previewHTML}
-                `;
+                // 检查任务选择器是否处于激活状态
+                const taskpickerPanel = document.getElementById('taskpickerPanel');
+                const isTaskPickerActive = taskpickerPanel && taskpickerPanel.classList.contains('active');
+                
+                // 设置按钮文本
+                const buttonText = isPickerMode ? '退出' : '添加计划';
+                
+                // 获取星期几
+                const getWeekDay = (dateStr) => {
+                    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                    const date = new Date(dateStr);
+                    return weekDays[date.getDay()];
+                };
+                
+                const weekDay = getWeekDay(today);
+                
+                // 根据登录状态决定显示内容
+                if (isLoggedIn) {
+                    // 用户已登录，显示正常内容
+                    container.innerHTML = `
+                        <h2 style="margin: 0; margin-bottom: 15px;"> ${month}-${day} ${weekDay} 任务</h2>
+                        ${greenPreviewHTML}
+                        <div id="day-content"></div>
+                        <div class="add-task-icon ${isPickerMode ? 'picker-mode' : ''}" id="addTaskIcon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="#50b767" class="icon icon-tabler icons-tabler-filled icon-tabler-square-rounded-plus">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M12 2l.324 .001l.318 .004l.616 .017l.299 .013l.579 .034l.553 .046c4.785 .464 6.732 2.411 7.196 7.196l.046 .553l.034 .579c.005 .098 .01 .198 .013 .299l.017 .616l.005 .642l-.005 .642l-.017 .616l-.013 .299l-.034 .579l-.046 .553c-.464 4.785 -2.411 6.732 -7.196 7.196l-.553 .046l-.579 .034c-.098 .005 -.198 .01 -.299 .013l-.616 .017l-.642 .005l-.642 -.005l-.616 -.017l-.299 -.013l-.579 -.034l-.553 -.046c-4.785 -.464 -6.732 -2.411 -7.196 -7.196l-.046 -.553l-.034 -.579a28.058 28.058 0 0 1 -.013 -.299l-.017 -.616c-.003 -.21 -.005 -.424 -.005 -.642l.001 -.324l.004 -.318l.017 -.616l.013 -.299l.034 -.579l.046 -.553c.464 -4.785 2.411 -6.732 7.196 -7.196l.553 -.046l.579 -.034c.098 -.005 .198 -.01 .299 -.013l.616 -.017c.21 -.003 .424 -.005 .642 -.005zm0 6a1 1 0 0 0 -1 1v2h-2l-.117 .007a1 1 0 0 0 .117 1.993h2v2l.007 .117a1 1 0 0 0 1.993 -.117v-2h2l.117 -.007a1 1 0 0 0 -.117 -1.993h-2v-2l-.007 -.117a1 1 0 0 0 -.993 -.883z" fill="#50b767" stroke-width="0" />
+                            </svg>
+                            <div class="text-button">${buttonText}</div>
+                        </div>
+                        ${previewHTML}
+                    `;
+                } else {
+                    // 用户未登录，显示登录提示
+                    container.innerHTML = `
+                        <h2 style="margin: 0; margin-bottom: 15px;"> ${month}-${day} ${weekDay} 任务</h2>
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 15px;">
+                            <p style="margin: 0; text-align: center; color: #666;">请登录后查看和管理任务</p>
+                        </div>
+                    `;
+                }
             } else {
                 // 如果是dayView（独立的日视图），显示完整的标题和按钮
                 container.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                      <h2 style="margin: 0;"> ${today} 任务</h2>
+                      <h2 style="margin: 0;"> ${today} ${weekDay} 任务</h2>
                       <div class="button-container" style="position: static; display: flex; gap: 10px;">
                         <div class="nav-buttons">
                             <button class="nav-btn" id="prevBtn"> ◀︎ </button>
                             <button class="nav-btn" id="todayBtn">今天</button>
-                            <button class="nav-btn" id="nextBtn"> ▶︎ </button><button class="nav-btn" id="settingsBtn">
+                            <button class="nav-btn" id="nextBtn"> ▶︎ </button><button class="nav-btn" id="calendarsettingBtn">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-settings settings-icon">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                                     <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
@@ -2738,6 +3589,12 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             }
             
             const dayContent = container.querySelector('#day-content');
+
+            // 只有在用户登录时才渲染任务内容
+            if (!isLoggedIn && isDayPanel) {
+                // 未登录且是dayPanel，不渲染任务内容
+                return;
+            }
 
             const pendingTasks = [];
             const completedTasks = [];
@@ -2784,49 +3641,84 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             toCompleteTasks.sort((a, b) => new Date(a.subtask.completeTime) - new Date(b.subtask.completeTime));
 
             const pendingContainer = document.createElement('div');
-            pendingContainer.innerHTML = `<h3>⏰ 计划中 (${pendingTasks.length})</h3>`;
-            pendingTasks.forEach(item => {
-                const taskEl = document.createElement('div');
-                taskEl.className = 'day-task pending';
-                // 创建任务信息容器
-                const taskInfo = document.createElement('div');
-                taskInfo.className = 'task-info';
-                
-                const taskTime = document.createElement('div');
-                taskTime.className = 'task-time';
-                taskTime.textContent = item.subtask.startTime ? item.subtask.startTime + ' -' : '';
-                
-                const taskContent = document.createElement('div');
-                taskContent.className = 'task-content';
-                taskContent.textContent = item.projectName + ': ';
-                
-                const subtaskSpan = document.createElement('span');
-                subtaskSpan.style.cssText = 'color:#ff0000; background-color: rgba(255, 0, 0, 0.1);';
-                subtaskSpan.textContent = '(' + item.subtask.name + ')';
-                taskContent.appendChild(subtaskSpan);
-                
-                taskInfo.appendChild(taskTime);
-                taskInfo.appendChild(taskContent);
-                
-                const taskMeta = document.createElement('div');
-                taskMeta.className = 'task-meta';
-                taskMeta.textContent = item.subtask.consumingTime + '分钟';
-                
-                taskEl.appendChild(taskInfo);
-                taskEl.appendChild(taskMeta);
-                // 添加点击事件以打开完成确认弹窗
-                taskEl.addEventListener('click', () => openCompleteTaskModal(item));
-                pendingContainer.appendChild(taskEl);
-            });
-
+            
+            // 当计划中任务为0时，隐藏整个容器
             if (pendingTasks.length === 0) {
-                const emptyEl = document.createElement('div');
-                emptyEl.className = 'empty-task';
-                emptyEl.textContent = '暂无计划中任务';
-                emptyEl.style.textAlign = 'center';
-                emptyEl.style.padding = '10px';
-                emptyEl.style.color = '#999';
-                pendingContainer.appendChild(emptyEl);
+                pendingContainer.style.display = 'none';
+            } else {
+                pendingContainer.innerHTML = `<h3>⏰ 计划中 (${pendingTasks.length})</h3>`;
+                pendingTasks.forEach(item => {
+                    const taskEl = document.createElement('div');
+                    taskEl.className = 'day-task pending';
+                    // 创建任务信息容器
+                    const taskInfo = document.createElement('div');
+                    taskInfo.className = 'task-info';
+                    
+                    // 创建勾选框容器
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.className = 'task-checkbox-container';
+                    
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'task-checkbox';
+                    checkbox.innerHTML = '⬜';
+                    
+                    // 添加悬浮效果
+                    checkbox.addEventListener('mouseenter', () => {
+                        checkbox.innerHTML = '✔️';
+                    });
+                    checkbox.addEventListener('mouseleave', () => {
+                        checkbox.innerHTML = '⬜';
+                    });
+                    
+                    // 添加勾选框点击事件
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openTaskCompleteModal(item, checkbox);
+                    });
+                    
+                    checkboxContainer.appendChild(checkbox);
+                    
+                    const taskContent = document.createElement('div');
+                    taskContent.className = 'task-content';
+                    taskContent.textContent = item.projectName + ': ';
+                    
+                    const subtaskSpan = document.createElement('span');
+                    subtaskSpan.style.cssText = 'color:#ff0000; background-color: rgba(255, 0, 0, 0.1);';
+                    subtaskSpan.textContent = '(' + item.subtask.name + ')';
+                    taskContent.appendChild(subtaskSpan);
+                    
+                    taskInfo.appendChild(checkboxContainer);
+                    taskInfo.appendChild(taskContent);
+                    
+                    const taskMeta = document.createElement('div');
+                    taskMeta.className = 'task-meta';
+                    
+                    const startTimeDiv = document.createElement('div');
+                    startTimeDiv.textContent = item.subtask.startTime ? item.subtask.startTime : '';
+                    
+                    const consumingTimeDiv = document.createElement('div');
+                    consumingTimeDiv.textContent = item.subtask.consumingTime + '分钟';
+                    
+                    // 添加积分值显示
+                    const pointsSpan = document.createElement('span');
+                    pointsSpan.style.color = '#FF0000';
+                    pointsSpan.style.fontSize = '14px';
+                    pointsSpan.style.marginLeft = '8px';
+                    pointsSpan.textContent = (item.subtask.base_points || 5) + '⭐' ;
+                    consumingTimeDiv.appendChild(pointsSpan);
+                    
+                    taskMeta.appendChild(startTimeDiv);
+                    taskMeta.appendChild(consumingTimeDiv);
+                    
+                    taskEl.appendChild(taskInfo);
+                    taskEl.appendChild(taskMeta);
+                    // 添加右键点击事件以打开完成确认弹窗
+                    taskEl.addEventListener('contextmenu', (e) => {
+                        e.preventDefault(); // 阻止默认右键菜单
+                        openCompleteTaskModal(item);
+                    });
+                    pendingContainer.appendChild(taskEl);
+                });
             }
 
             const completedContainer = document.createElement('div');
@@ -2857,6 +3749,14 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 const taskMeta = document.createElement('div');
                 taskMeta.className = 'task-meta';
                 taskMeta.textContent = item.subtask.consumingTime + '分钟';
+                
+                // 添加积分值显示
+                const pointsSpan = document.createElement('span');
+                pointsSpan.style.color = '#FF0000';
+                pointsSpan.style.fontSize = '14px';
+                pointsSpan.style.marginLeft = '8px';
+                pointsSpan.textContent = (item.subtask.base_points || 5) + '⭐' ;
+                taskMeta.appendChild(pointsSpan);
                 
                 taskEl.appendChild(taskInfo);
                 taskEl.appendChild(taskMeta);
@@ -2890,7 +3790,8 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             }
             
             // 为dayPanel中的添加任务图标绑定事件
-            if (isDayPanel) {
+            if (isDayPanel && isLoggedIn) {
+                // 已登录，绑定添加任务图标事件
                 const addTaskIcon = container.querySelector('#addTaskIcon');
                 if (addTaskIcon) {
                     addTaskIcon.addEventListener('click', () => {
@@ -2951,57 +3852,136 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             if (today === formatDate(getToday())) {
                 // 渲染待补做任务
                 const toCompleteContainer = document.createElement('div');
-            toCompleteContainer.className = 'task-group toComplete';
-            toCompleteContainer.innerHTML = `<h3>📋待补做 (${toCompleteTasks.length})</h3>`;
-            
-            toCompleteTasks.forEach(item => {
-                const taskEl = document.createElement('div');
-                taskEl.className = 'day-task to-complete';
-                // 创建任务信息容器
-                const taskInfo = document.createElement('div');
-                taskInfo.className = 'task-info';
+                toCompleteContainer.className = 'task-group toComplete';
                 
-                const taskTime = document.createElement('div');
-                taskTime.className = 'task-time';
-                taskTime.textContent = item.subtask.completeTime + ' -';
+                // 当待补做任务为0时，隐藏整个容器
+                if (toCompleteTasks.length === 0) {
+                    toCompleteContainer.style.display = 'none';
+                } else {
+                    // 创建标题容器
+                    const titleContainer = document.createElement('div');
+                    titleContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 5px 0;';
+                    
+                    const titleText = document.createElement('h3');
+                    titleText.textContent = `📋待补做 (${toCompleteTasks.length})`;
+                    titleText.style.margin = '0';
+                    
+                    const arrowIcon = document.createElement('span');
+                    arrowIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-down"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>';
+                    arrowIcon.style.cssText = 'color: #666; transition: transform 0.3s ease; margin-right: 10px; transform: rotate(180deg);';
+                    
+                    titleContainer.appendChild(titleText);
+                    titleContainer.appendChild(arrowIcon);
+                    toCompleteContainer.appendChild(titleContainer);
+                    
+                    // 创建任务内容容器
+                    const tasksContent = document.createElement('div');
+                    tasksContent.className = 'toComplete-content';
+                    tasksContent.style.display = 'none'; // 默认隐藏
+                    
+                    // 添加点击事件切换显示/隐藏
+                    titleContainer.addEventListener('click', () => {
+                        const isHidden = tasksContent.style.display === 'none';
+                        tasksContent.style.display = isHidden ? 'block' : 'none';
+                        arrowIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+                    });
+                    
+                    toCompleteTasks.forEach(item => {
+                        const taskEl = document.createElement('div');
+                        taskEl.className = 'day-task to-complete';
+                        // 创建任务信息容器
+                        const taskInfo = document.createElement('div');
+                        taskInfo.className = 'task-info';
+                        
+                        // 创建勾选框容器
+                        const checkboxContainer = document.createElement('div');
+                        checkboxContainer.className = 'task-checkbox-container';
+                        
+                        const checkbox = document.createElement('div');
+                        checkbox.className = 'task-checkbox';
+                        checkbox.innerHTML = '⬜';
+                        
+                        // 添加悬浮效果
+                        checkbox.addEventListener('mouseenter', () => {
+                            checkbox.innerHTML = '✔️';
+                        });
+                        checkbox.addEventListener('mouseleave', () => {
+                            checkbox.innerHTML = '⬜';
+                        });
+                        
+                        // 添加勾选框点击事件
+                        checkbox.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openTaskCompleteModal(item, checkbox);
+                        });
+                        
+                        checkboxContainer.appendChild(checkbox);
+                        
+                        const taskContent = document.createElement('div');
+                        taskContent.className = 'task-content';
+                        taskContent.textContent = item.projectName + ': ';
+                        
+                        const subtaskSpan = document.createElement('span');
+                        subtaskSpan.style.cssText = 'color:#ff9800; background-color: rgba(255, 152, 0, 0.1);';
+                        subtaskSpan.textContent = '(' + item.subtask.name + ')';
+                        taskContent.appendChild(subtaskSpan);
+                        
+                        taskInfo.appendChild(checkboxContainer);
+                        taskInfo.appendChild(taskContent);
+                        
+                        const taskMeta = document.createElement('div');
+                        taskMeta.className = 'task-meta';
+                        
+                        const completeTimeDiv = document.createElement('div');
+                        completeTimeDiv.textContent = item.subtask.completeTime ? item.subtask.completeTime : '';
+                        
+                        const consumingTimeDiv = document.createElement('div');
+                        consumingTimeDiv.textContent = item.subtask.consumingTime + '分钟';
+                        
+                        // 添加积分值显示
+                        const pointsSpan = document.createElement('span');
+                        pointsSpan.style.color = '#FF0000';
+                        pointsSpan.style.fontSize = '14px';
+                        pointsSpan.style.marginLeft = '8px';
+                        pointsSpan.textContent = (item.subtask.base_points || 5) + '⭐' ;
+                        consumingTimeDiv.appendChild(pointsSpan);
+                        
+                        taskMeta.appendChild(completeTimeDiv);
+                        taskMeta.appendChild(consumingTimeDiv);
+                        
+                        taskEl.appendChild(taskInfo);
+                        taskEl.appendChild(taskMeta);
+                        taskEl.addEventListener('contextmenu', (e) => {
+                            e.preventDefault(); // 阻止默认右键菜单
+                            openCompleteTaskModal(item);
+                        });
+                        tasksContent.appendChild(taskEl);
+                    });
+                    
+                    toCompleteContainer.appendChild(tasksContent);
+                }
                 
-                const taskContent = document.createElement('div');
-                taskContent.className = 'task-content';
-                taskContent.textContent = item.projectName + ': ';
-                
-                const subtaskSpan = document.createElement('span');
-                subtaskSpan.style.cssText = 'color:#ff9800; background-color: rgba(255, 152, 0, 0.1);';
-                subtaskSpan.textContent = '(' + item.subtask.name + ')';
-                taskContent.appendChild(subtaskSpan);
-                
-                taskInfo.appendChild(taskTime);
-                taskInfo.appendChild(taskContent);
-                
-                const taskMeta = document.createElement('div');
-                taskMeta.className = 'task-meta';
-                taskMeta.textContent = item.subtask.consumingTime + '分钟';
-                
-                taskEl.appendChild(taskInfo);
-                taskEl.appendChild(taskMeta);
-                taskEl.addEventListener('click', () => openCompleteTaskModal(item));
-                toCompleteContainer.appendChild(taskEl);
-            });
-            
-            if (toCompleteTasks.length === 0) {
-                const emptyEl = document.createElement('div');
-                emptyEl.className = 'empty-task';
-                emptyEl.textContent = '暂无待补做任务';
-                emptyEl.style.textAlign = 'center';
-                emptyEl.style.padding = '10px';
-                emptyEl.style.color = '#999';
-                toCompleteContainer.appendChild(emptyEl);
-            }
-            
                 dayContent.appendChild(toCompleteContainer);
             }
             
             // 应用保存的字体大小到新创建的任务元素
             applySavedFontSize(container);
+            
+            // 如果是dayPanel且处于picker模式，重新绑定预览区域的事件
+            if (isDayPanel && isPickerMode) {
+                const greenPreviewBox = container.querySelector('.green-preview-box');
+                if (greenPreviewBox) {
+                    // 重新绑定预览区域内的删除按钮事件
+                    const removeButtons = greenPreviewBox.querySelectorAll('.preview-task-remove');
+                    removeButtons.forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const taskIndex = parseInt(this.dataset.index);
+                            removeTaskFromPreview(taskIndex);
+                        });
+                    });
+                }
+            }
         }
 
         // 为已完成任务显示右键菜单
@@ -3085,9 +4065,775 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
             }, 100);
         }
 
+        // 打开专注计时弹窗
+        function openFocusTimerModal(timeInput) {
+            // 移除已存在的计时弹窗
+            const existingTimerModal = document.querySelector('.focus-timer-modal');
+            if (existingTimerModal) existingTimerModal.remove();
+            
+            // 创建弹窗遮罩
+            const timerOverlay = document.createElement('div');
+            timerOverlay.className = 'focus-timer-modal-overlay';
+            timerOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 20000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            
+            // 创建弹窗内容
+            const timerModal = document.createElement('div');
+            timerModal.className = 'focus-timer-modal';
+            timerModal.style.cssText = `
+                background: white;
+                border-radius: 20px;
+                padding: 30px;
+                width: 400px;
+                max-width: 90vw;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                text-align: center;
+            `;
+            
+            timerModal.innerHTML = `
+                <div style="margin-top: -10px; display: flex; justify-content: flex-end; align-items: center;">
+                    <button id="closeTimerModalBtn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#333';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#999';">&times;</button>
+                </div>
+                
+                <!-- 计时模式切换滑块 -->
+                <div style="margin-bottom: 30px;">
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <div class="timer-mode-switch" style="position: relative; width: 120px; height: 36px; background: #ddd; border-radius: 18px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center;">
+                            <div class="timer-mode-slider" style="position: absolute; top: 3px; left: 3px; width: 54px; height: 30px; background: #007bff; border-radius: 15px; transition: all 0.3s ease; z-index: 1;"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; z-index: 2; pointer-events: none;">
+                                <span class="timer-mode-text-left" style="flex: 1; text-align: center; color: white; font-size: 12px; font-weight: bold;">正计时</span>
+                                <span class="timer-mode-text-right" style="flex: 1; text-align: center; color: #666; font-size: 12px; font-weight: bold;">倒计时</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 圆环计时器 -->
+                <div style="margin-bottom: 30px; position: relative;">
+                    <div id="timerRing" style="width: 200px; height: 200px; position: relative; margin: 0 auto;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                        <div id="timerDisplay" style="font-size: 32px; font-weight: bold; color: #333; margin-bottom: 10px;">00:00</div>
+                        <button id="restartTimerBtn" style="display: none; padding: 6px 12px; background: #999; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">重新计时</button>
+                    </div>
+                </div>
+                
+                <!-- 倒计时时间选择 -->
+                <div id="countdownTimeSelector" style="margin-bottom: 30px; display: none;">
+                    <label style="display: block; margin-bottom: 10px; color: #666; font-size: 14px;">选择倒计时时间（分钟）：</label>
+                    <input type="range" id="countdownSlider" min="1" max="120" value="25" style="width: 100%; margin-bottom: 10px;">
+                    <div id="countdownValue" style="color: #333; font-size: 16px; font-weight: bold;">25 分钟</div>
+                </div>
+                
+                <!-- 控制按钮 -->
+                <div id="timerControls" style="display: flex; justify-content: center;">
+                    <button id="startTimerBtn" style="padding: 12px 30px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;">开始</button>
+                </div>
+                
+                <div id="timerRunningControls" style="display: none; gap: 15px; justify-content: center;">
+                    <button id="pauseTimerBtn" style="padding: 12px 20px; background: #ffc107; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">暂停</button>
+                    <button id="stopTimerBtn" style="padding: 12px 20px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">结束</button>
+                </div>
+            `;
+            
+            timerOverlay.appendChild(timerModal);
+            document.body.appendChild(timerOverlay);
+            
+            // 获取元素引用
+            const modeSwitch = timerModal.querySelector('.timer-mode-switch');
+            const modeSlider = timerModal.querySelector('.timer-mode-slider');
+            const modeTextLeft = timerModal.querySelector('.timer-mode-text-left');
+            const modeTextRight = timerModal.querySelector('.timer-mode-text-right');
+            const timerDisplay = timerModal.querySelector('#timerDisplay');
+            const timerRing = timerModal.querySelector('#timerRing');
+            const restartBtn = timerModal.querySelector('#restartTimerBtn');
+            const countdownSelector = timerModal.querySelector('#countdownTimeSelector');
+            const countdownSlider = timerModal.querySelector('#countdownSlider');
+            const countdownValue = timerModal.querySelector('#countdownValue');
+            const startBtn = timerModal.querySelector('#startTimerBtn');
+            const timerControls = timerModal.querySelector('#timerControls');
+            const runningControls = timerModal.querySelector('#timerRunningControls');
+            const pauseBtn = timerModal.querySelector('#pauseTimerBtn');
+            const stopBtn = timerModal.querySelector('#stopTimerBtn');
+            
+            // 计时器状态
+            let isCountdown = false;
+            let timerInterval = null;
+            let currentSeconds = 0;
+            let totalSeconds = 0;
+            let isPaused = false;
+            let startTime = null;
+            let isTimerStarted = false;
+            let endAudio = null; // 预加载的结束音频
+            
+            // 初始化圆环
+            function initTimerRing() {
+                timerRing.innerHTML = '';
+                const radius = 80;
+                const centerX = 100;
+                const centerY = 100;
+                const rectWidth = 6;
+                const rectHeight = 12;
+                
+                for (let i = 0; i < 60; i++) {
+                    const angle = (i * 6 - 90) * Math.PI / 180; // 从顶部开始，每个长方形间隔6度
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+                    
+                    const rect = document.createElement('div');
+                    rect.className = 'timer-segment';
+                    rect.style.cssText = `
+                        position: absolute;
+                        width: ${rectWidth}px;
+                        height: ${rectHeight}px;
+                        background: #f0f0f0;
+                        border-radius: 3px;
+                        left: ${x - rectWidth/2}px;
+                        top: ${y - rectHeight/2}px;
+                        transform: rotate(${angle + Math.PI/2}rad);
+                        transition: background-color 0.3s ease;
+                    `;
+                    timerRing.appendChild(rect);
+                }
+            }
+            
+            // 初始化圆环
+            initTimerRing();
+            
+            // 模式切换
+            modeSwitch.addEventListener('click', () => {
+                if (isTimerStarted) {
+                    alert('计时进行中，无法切换模式');
+                    return;
+                }
+                
+                isCountdown = !isCountdown;
+                if (isCountdown) {
+                    modeSlider.style.left = '63px';
+                    modeTextLeft.style.color = '#666';
+                    modeTextRight.style.color = 'white';
+                    countdownSelector.style.display = 'block';
+                    totalSeconds = parseInt(countdownSlider.value) * 60;
+                    currentSeconds = totalSeconds;
+                } else {
+                    modeSlider.style.left = '3px';
+                    modeTextLeft.style.color = 'white';
+                    modeTextRight.style.color = '#666';
+                    countdownSelector.style.display = 'none';
+                    currentSeconds = 0;
+                    totalSeconds = 0;
+                }
+                updateDisplay();
+                updateProgress();
+            });
+            
+            // 倒计时时间选择
+            countdownSlider.addEventListener('input', () => {
+                const minutes = parseInt(countdownSlider.value);
+                countdownValue.textContent = `${minutes} 分钟`;
+                if (isCountdown && !isTimerStarted) {
+                    totalSeconds = minutes * 60;
+                    currentSeconds = totalSeconds;
+                    updateDisplay();
+                    updateProgress();
+                }
+            });
+            
+            // 更新显示
+            function updateDisplay() {
+                const minutes = Math.floor(currentSeconds / 60);
+                const seconds = currentSeconds % 60;
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            // 更新进度环
+            function updateProgress() {
+                const segments = timerRing.querySelectorAll('.timer-segment');
+                
+                if (isCountdown && totalSeconds > 0) {
+                    const progress = currentSeconds / totalSeconds;
+                    const filledSegments = Math.ceil(progress * 60);
+                    
+                    segments.forEach((segment, index) => {
+                        if (index < filledSegments) {
+                            segment.style.background = '#007bff';
+                        } else {
+                            segment.style.background = '#f0f0f0';
+                        }
+                    });
+                } else if (!isCountdown) {
+                    // 正计时模式，60秒一圈循环
+                    const cycleSeconds = currentSeconds % 60;
+                    const filledSegments = Math.ceil((cycleSeconds / 60) * 60);
+                    
+                    segments.forEach((segment, index) => {
+                        if (index < filledSegments) {
+                            segment.style.background = '#28a745';
+                        } else {
+                            segment.style.background = '#f0f0f0';
+                        }
+                    });
+                }
+            }
+            
+            // 开始计时
+            startBtn.addEventListener('click', () => {
+                isTimerStarted = true;
+                startTime = Date.now() - (isCountdown ? (totalSeconds - currentSeconds) * 1000 : currentSeconds * 1000);
+                timerControls.style.display = 'none';
+                runningControls.style.display = 'flex';
+                
+                // 播放开始音频
+                const startAudio = new Audio('audio/startime.mp3');
+                startAudio.play().catch(e => console.log('音频播放失败:', e));
+                
+                // 倒计时模式下预加载结束音频
+                if (isCountdown) {
+                    // 预加载结束音频并立即播放（静音状态）
+                    endAudio = new Audio('audio/endtime.mp3');
+                    endAudio.volume = 0; // 设置为静音
+                    endAudio.play().catch(e => console.log('预加载音频失败:', e));
+                }
+                
+                timerInterval = setInterval(() => {
+                    if (isCountdown) {
+                        currentSeconds--;
+                        if (currentSeconds <= 0) {
+                            currentSeconds = 0;
+                            clearInterval(timerInterval);
+                            isTimerStarted = false;
+                            
+                            // 倒计时结束时播放预加载的音频
+                            if (endAudio) {
+                                endAudio.currentTime = 0; // 重置播放位置
+                                endAudio.volume = 1; // 恢复音量
+                                endAudio.play().catch(e => console.log('结束音频播放失败:', e));
+                            }
+                            
+                            showTimerComplete();
+                        }
+                    } else {
+                        currentSeconds++;
+                    }
+                    updateDisplay();
+                    updateProgress();
+                }, 1000);
+            });
+            
+            // 暂停/继续
+            pauseBtn.addEventListener('click', () => {
+                if (isPaused) {
+                    // 继续
+                    const continueAudio = new Audio('audio/continue.mp3');
+                    continueAudio.play().catch(e => console.log('音频播放失败:', e));
+                    
+                    startTime = Date.now() - (isCountdown ? (totalSeconds - currentSeconds) * 1000 : currentSeconds * 1000);
+                    timerInterval = setInterval(() => {
+                        if (isCountdown) {
+                            currentSeconds--;
+                            if (currentSeconds <= 0) {
+                                currentSeconds = 0;
+                                clearInterval(timerInterval);
+                                isTimerStarted = false;
+                                
+                                // 倒计时结束时播放预加载的音频
+                                if (endAudio) {
+                                    endAudio.currentTime = 0; // 重置播放位置
+                                    endAudio.volume = 1; // 恢复音量
+                                    endAudio.play().catch(e => console.log('结束音频播放失败:', e));
+                                }
+                                
+                                showTimerComplete();
+                            }
+                        } else {
+                            currentSeconds++;
+                        }
+                        updateDisplay();
+                        updateProgress();
+                    }, 1000);
+                    pauseBtn.textContent = '暂停';
+                    isPaused = false;
+                    restartBtn.style.display = 'none';
+                } else {
+                    // 暂停
+                    const pauseAudio = new Audio('audio/pause.mp3');
+                    pauseAudio.play().catch(e => console.log('音频播放失败:', e));
+                    
+                    clearInterval(timerInterval);
+                    pauseBtn.textContent = '继续';
+                    isPaused = true;
+                    restartBtn.style.display = 'block';
+                }
+            });
+            
+            // 结束计时
+            stopBtn.addEventListener('click', () => {
+                // 播放结束音频
+                const endAudioPlay = new Audio('audio/endtime.mp3');
+                endAudioPlay.play().catch(e => console.log('音频播放失败:', e));
+                
+                clearInterval(timerInterval);
+                isTimerStarted = false;
+                // 清理预加载的音频
+                if (endAudio) {
+                    endAudio.pause();
+                    endAudio = null;
+                }
+                
+                // 延迟显示弹窗，确保音频播放完成
+                setTimeout(() => {
+                    showTimerComplete();
+                }, 500); // 延迟500毫秒确保音频开始播放
+            });
+            
+            // 重新计时
+            restartBtn.addEventListener('click', () => {
+                // 播放重新开始音频
+                const restartAudio = new Audio('audio/restart.mp3');
+                restartAudio.play().catch(e => console.log('音频播放失败:', e));
+                
+                clearInterval(timerInterval);
+                isTimerStarted = false;
+                isPaused = false;
+                
+                // 清理预加载的音频
+                if (endAudio) {
+                    endAudio.pause();
+                    endAudio = null;
+                }
+                
+                // 重置计时器状态
+                if (isCountdown) {
+                    totalSeconds = parseInt(countdownSlider.value) * 60;
+                    currentSeconds = totalSeconds;
+                } else {
+                    currentSeconds = 0;
+                    totalSeconds = 0;
+                }
+                
+                // 重置UI
+                timerControls.style.display = 'flex';
+                runningControls.style.display = 'none';
+                restartBtn.style.display = 'none';
+                pauseBtn.textContent = '暂停';
+                
+                updateDisplay();
+                updateProgress();
+            });
+            
+            // 关闭弹窗按钮
+            const closeBtn = timerModal.querySelector('#closeTimerModalBtn');
+            closeBtn.addEventListener('click', () => {
+                if (timerInterval) {
+                    const confirmClose = confirm('计时正在进行中，确定要关闭吗？');
+                    if (confirmClose) {
+                        clearInterval(timerInterval);
+                        isTimerStarted = false;
+                        // 清理预加载的音频
+                        if (endAudio) {
+                            endAudio.pause();
+                            endAudio = null;
+                        }
+                        timerOverlay.remove();
+                    }
+                } else {
+                    timerOverlay.remove();
+                }
+            });
+            
+            // 显示计时完成弹窗
+            function showTimerComplete() {
+                const elapsedMinutes = isCountdown ? 
+                    Math.ceil((totalSeconds - currentSeconds) / 60) : 
+                    Math.ceil(currentSeconds / 60);
+                
+                const confirmResult = confirm(`本次计时 ${elapsedMinutes} 分钟，是否确认？`);
+                if (confirmResult) {
+                    // 将计时结果填入任务用时输入框
+                    timeInput.value = elapsedMinutes;
+                    // 关闭计时弹窗
+                    timerOverlay.remove();
+                }
+            }
+            
+            // 点击遮罩关闭（可选）
+            timerOverlay.addEventListener('click', (e) => {
+                if (e.target === timerOverlay) {
+                    if (timerInterval) {
+                        const confirmClose = confirm('计时正在进行中，确定要关闭吗？');
+                        if (confirmClose) {
+                            clearInterval(timerInterval);
+                            isTimerStarted = false;
+                            timerOverlay.remove();
+                        }
+                    } else {
+                        timerOverlay.remove();
+                    }
+                }
+            });
+            
+            // 初始化显示
+            if (isCountdown) {
+                totalSeconds = parseInt(countdownSlider.value) * 60;
+                currentSeconds = totalSeconds;
+            }
+            updateDisplay();
+            updateProgress();
+        }
+
+        // 打开任务完成弹窗
+        function openTaskCompleteModal(taskItem, checkboxElement) {
+            // 移除已存在的弹窗
+            const existingModal = document.querySelector('.task-complete-modal');
+            if (existingModal) existingModal.remove();
+            
+            // 创建弹窗遮罩
+            const overlay = document.createElement('div');
+            overlay.className = 'task-complete-modal-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            
+            // 创建弹窗内容
+            const modal = document.createElement('div');
+            modal.className = 'task-complete-modal';
+            modal.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                width: 400px;
+                max-width: 90vw;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            `;
+            
+            // 获取今天的日期
+            const today = new Date();
+            const todayStr = today.getFullYear() + '-' + 
+                String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(today.getDate()).padStart(2, '0');
+            
+            modal.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">完成任务</h3>
+                    <button class="close-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">任务名称：</label>
+                    <div id="taskNameDisplay" style="padding: 8px 12px; background: #f5f5f5; border-radius: 6px; color: #666; cursor: pointer;" onclick="editTaskNameInline(this, '${taskItem.projectName}', '${taskItem.subtask.uniqueId}')">${taskItem.projectName}: ${taskItem.subtask.name}</div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="completeTimeInput" style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">任务日期：</label>
+                    <input type="date" id="completeTimeInput" value="${todayStr}" style=" padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <label for="consumingTimeInput" style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">任务用时（分钟）：</label>
+                    <div style="display: flex; align-items: center; gap: 8px;width:60%; ">
+                        <button id="decreaseTimeBtn" style="width: 32px; height: 32px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #666;">-</button>
+                        <input type="number" id="consumingTimeInput" value="${taskItem.subtask.consumingTime || ''}" placeholder="请输入任务用时" min="1" style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width:40%">
+                        <button id="increaseTimeBtn" style="width: 32px; height: 32px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #666;">+</button>
+                        <button id="focusTimerBtn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 8px;">专注计时</button>
+                    </div>
+                    <div id="consumingTimeError" style="color: #ff4444; font-size: 12px; margin-top: 4px; display: none;">任务用时为必填项</div>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="cancel-btn" style="padding: 8px 16px; background: #f5f5f5; color: #666; border: none; border-radius: 6px; cursor: pointer;">取消</button>
+                    <button class="confirm-btn" style="padding: 8px 16px; background: #50b767; color: white; border: none; border-radius: 6px; cursor: pointer;">确认完成</button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // 绑定事件
+            const closeBtn = modal.querySelector('.close-modal-btn');
+            const cancelBtn = modal.querySelector('.cancel-btn');
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            const completeTimeInput = modal.querySelector('#completeTimeInput');
+            const consumingTimeInput = modal.querySelector('#consumingTimeInput');
+            const consumingTimeError = modal.querySelector('#consumingTimeError');
+            const decreaseTimeBtn = modal.querySelector('#decreaseTimeBtn');
+            const increaseTimeBtn = modal.querySelector('#increaseTimeBtn');
+            const focusTimerBtn = modal.querySelector('#focusTimerBtn');
+            
+            // 关闭弹窗
+            const closeModal = () => {
+                overlay.remove();
+            };
+            
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeModal();
+            });
+            
+            // 增减时间按钮事件
+            decreaseTimeBtn.addEventListener('click', () => {
+                const currentValue = parseInt(consumingTimeInput.value) || 0;
+                const newValue = Math.max(1, currentValue - 1);
+                consumingTimeInput.value = newValue;
+                consumingTimeError.style.display = 'none';
+            });
+            
+            increaseTimeBtn.addEventListener('click', () => {
+                const currentValue = parseInt(consumingTimeInput.value) || 0;
+                const newValue = currentValue + 1;
+                consumingTimeInput.value = newValue;
+                consumingTimeError.style.display = 'none';
+            });
+            
+            // 专注计时按钮事件
+            focusTimerBtn.addEventListener('click', () => {
+                openFocusTimerModal(consumingTimeInput);
+            });
+            
+            // 确认完成
+            confirmBtn.addEventListener('click', () => {
+                const completeTime = completeTimeInput.value;
+                const consumingTime = consumingTimeInput.value.trim();
+                
+                // 验证任务用时
+                if (!consumingTime || isNaN(consumingTime) || parseInt(consumingTime) < 1) {
+                    consumingTimeError.style.display = 'block';
+                    consumingTimeInput.focus();
+                    return;
+                }
+                
+                try {
+                    // 更新任务状态
+                    completeTask(taskItem, completeTime, parseInt(consumingTime), null);
+                    closeModal();
+                } catch (error) {
+                    console.error('完成任务时发生错误:', error);
+                    alert('完成任务时发生错误，请重试');
+                }
+            });
+            
+            // 聚焦到用时输入框（如果为空）
+            if (!taskItem.subtask.consumingTime) {
+                consumingTimeInput.focus();
+            }
+        }
+        
+        // 编辑任务名称（弹窗内联编辑）
+        function editTaskNameInline(element, projectName, uniqueId) {
+            // 检查是否已经在编辑状态，避免重复触发
+            if (element.querySelector('input')) {
+                return;
+            }
+            
+            const currentText = element.textContent;
+            const colonIndex = currentText.indexOf(': ');
+            const projectPrefix = currentText.substring(0, colonIndex + 2);
+            const currentTaskName = currentText.substring(colonIndex + 2);
+            
+            // 临时移除onclick事件，防止重复触发
+            element.removeAttribute('onclick');
+            
+            // 创建容器div，包含项目名称和输入框
+            const container = document.createElement('div');
+            container.style.cssText = 'display: flex; align-items: center; width: 100%;';
+            
+            // 创建项目名称标签（不可编辑）
+            const projectLabel = document.createElement('span');
+            projectLabel.textContent = projectPrefix;
+            projectLabel.style.cssText = 'color: #666; flex-shrink: 0;';
+            
+            // 创建输入框（只编辑任务名称部分）
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTaskName;
+            input.style.cssText = 'flex: 1; border: 1px solid #50b767; border-radius: 4px; padding: 4px 8px; font-size: 14px; outline: none; margin-left: 0;';
+            
+            // 替换div内容
+            element.innerHTML = '';
+            container.appendChild(projectLabel);
+            container.appendChild(input);
+            element.appendChild(container);
+            input.focus();
+            // 将光标定位到文本末尾，而不是全选
+            input.setSelectionRange(input.value.length, input.value.length);
+            
+            // 保存函数
+            const saveEdit = () => {
+                const newTaskName = input.value.trim();
+                
+                // 如果输入框为空，恢复原任务名称
+                if (!newTaskName) {
+                    element.textContent = currentText;
+                    // 恢复onclick事件
+                    element.setAttribute('onclick', `editTaskNameInline(this, '${projectName}', '${uniqueId}')`);
+                    return;
+                }
+                
+                // 如果任务名称有变化，则更新
+                if (newTaskName !== currentTaskName) {
+                    // 更新项目数据
+                    const projects = getProjects();
+                    const project = projects.find(p => p.name === projectName);
+                    
+                    if (project && project.subtasks) {
+                        const subtask = project.subtasks.find(s => s.uniqueId === uniqueId);
+                        if (subtask) {
+                            // 检查新名称是否已存在
+                            const nameExists = project.subtasks.some(s => s.name === newTaskName && s.uniqueId !== uniqueId);
+                            if (nameExists) {
+                                alert('该任务名称已存在，请使用其他名称！');
+                                element.textContent = currentText;
+                                // 恢复onclick事件
+                                element.setAttribute('onclick', `editTaskNameInline(this, '${projectName}', '${uniqueId}')`);
+                                return;
+                            }
+                            
+                            // 更新任务名称
+                            subtask.name = newTaskName;
+                            saveProjects(projects);
+                            
+                            // 更新显示
+                            element.textContent = projectPrefix + newTaskName;
+                            console.log(`任务名称已更新: ${currentTaskName} -> ${newTaskName}`);
+                            // 恢复onclick事件
+                            element.setAttribute('onclick', `editTaskNameInline(this, '${projectName}', '${uniqueId}')`);
+                            return;
+                        }
+                    }
+                }
+                
+                // 如果没有变化或更新失败，恢复原始内容
+                element.textContent = currentText;
+                // 恢复onclick事件
+                element.setAttribute('onclick', `editTaskNameInline(this, '${projectName}', '${uniqueId}')`);
+            };
+            
+            // 绑定事件
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    element.textContent = currentText;
+                    // 恢复onclick事件
+                    element.setAttribute('onclick', `editTaskNameInline(this, '${projectName}', '${uniqueId}')`);
+                }
+            });
+        }
+
+        // 完成任务
+        function completeTask(taskItem, completeTime, consumingTime, checkboxElement) {
+            console.log('开始完成任务:', taskItem);
+            const projects = getProjects();
+            const project = projects.find(p => p.name === taskItem.projectName);
+            
+            if (project && project.subtasks) {
+                const subtaskIndex = project.subtasks.findIndex(s => 
+                    s.uniqueId === taskItem.subtask.uniqueId ||
+                    (s.name === taskItem.subtask.name && s.completeTime === taskItem.subtask.completeTime)
+                );
+                
+                if (subtaskIndex !== -1) {
+                    // 更新任务状态和信息
+                    project.subtasks[subtaskIndex].status = 1;
+                    project.subtasks[subtaskIndex].completeTime = completeTime;
+                    project.subtasks[subtaskIndex].consumingTime = consumingTime;
+                    
+                    console.log('任务状态已更新:', project.subtasks[subtaskIndex]);
+                    
+                    // 获取任务积分并增加到用户积分中
+                    const taskPoints = project.subtasks[subtaskIndex].base_points || getBasePoints();
+                    console.log('任务积分:', taskPoints);
+                    
+                    if (window.userManager && window.userManager.currentUser) {
+                        const currentPoints = window.userManager.getUserPoints();
+                        console.log('当前积分:', currentPoints);
+                        
+                        // 使用积分变化量而不是新的总积分值
+                        window.userManager.updateUserPoints(taskPoints);
+                        console.log('积分已更新，增加了', taskPoints, '积分');
+                        
+                        // 显示积分特效
+                        showPointsEffect(taskPoints);
+                        console.log('积分特效已调用');
+                        
+                        // 延迟0.5秒播放音频
+                        setTimeout(() => {
+                            try {
+                                const audio = new Audio('./audio/getpoints.WAV');
+                                audio.volume = 0.5; // 设置音量为50%
+                                audio.play().catch(error => {
+                                    console.log('音频播放失败:', error);
+                                });
+                            } catch (error) {
+                                console.log('音频加载失败:', error);
+                            }
+                        }, 100);// 延迟播放音频的时间 100为0.1秒
+                    } else {
+                        console.error('userManager 或 currentUser 不存在');
+                    }
+                    
+                    saveProjects(projects);
+                    console.log('项目数据已保存');
+                    
+                    // 更新勾选框图标为已完成状态
+                    if (checkboxElement) {
+                        checkboxElement.innerHTML = `
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="#50b767"></rect>
+                                <polyline points="9,12 12,15 16,9" stroke="white" stroke-width="2"></polyline>
+                            </svg>
+                        `;
+                        checkboxElement.style.pointerEvents = 'none';
+                    }
+                    
+                    // 延迟刷新界面，让用户看到勾选效果
+                    setTimeout(() => {
+                        // 重新渲染当前视图
+                        const currentSelectedDate = getCurrentSelectedDate();
+                        renderMonthView(new Date());
+                        
+                        // 如果有日面板，也重新渲染日面板
+                        const dayPanel = document.getElementById('dayPanel');
+                        if (dayPanel) {
+                            renderDayView(currentSelectedDate, dayPanel);
+                        }
+                    }, 500);
+                }
+            }
+        }
+
         // 将已完成任务标记为计划中
         function markTaskAsPlanned(taskItem) {
             if (confirm(`确定要将任务"${taskItem.subtask.name}"重新标记为计划中吗？`)) {
+                // 播放退回积分音频
+                setTimeout(() => {
+                    try {
+                        const audio = new Audio('./audio/backpoints.WAV');
+                        audio.volume = 0.5; // 设置音量为50%
+                        audio.play().catch(error => {
+                            console.log('音频播放失败:', error);
+                        });
+                    } catch (error) {
+                        console.log('音频加载失败:', error);
+                    }
+                }, 100); // 延迟0.1秒播放音频
                 // 更新localStorage中的项目数据
                 const projects = getProjects();
                 const project = projects.find(p => p.name === taskItem.projectName);
@@ -3097,9 +4843,41 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                         (s.name === taskItem.subtask.name && s.completeTime === taskItem.subtask.completeTime)
                     );
                     if (subtaskIndex !== -1) {
+                        // 获取任务积分
+                        const taskPoints = project.subtasks[subtaskIndex].base_points || getBasePoints();
+                        
                         // 只更新status字段，不改变其他字段
                         project.subtasks[subtaskIndex].status = 0;
                         saveProjects(projects);
+                        
+                        // 扣减用户积分
+                        console.log('开始扣减积分流程');
+                        console.log('任务积分:', taskPoints);
+                        console.log('userManager存在:', !!window.userManager);
+                        console.log('currentUser存在:', !!window.userManager?.currentUser);
+                        
+                        if (taskPoints > 0 && window.userManager && window.userManager.currentUser) {
+                            const currentPoints = window.userManager.getUserPoints();
+                            console.log('当前积分:', currentPoints);
+                            
+                            // 使用负数积分变化量来扣减积分
+                            const success = window.userManager.updateUserPoints(-taskPoints);
+                            if (success) {
+                                console.log('积分更新完成，扣减了', taskPoints, '积分');
+                            } else {
+                                console.log('积分不足，无法扣减');
+                            }
+                            
+                            // 显示积分扣减提示
+                            showMessage(`任务已退回计划中，扣减 ${taskPoints} 积分`, 'warning');
+                        } else {
+                            console.log('积分扣减条件不满足:', {
+                                taskPoints,
+                                userManagerExists: !!window.userManager,
+                                currentUserExists: !!window.userManager?.currentUser
+                            });
+                            showMessage('任务已重新标记为计划中', 'success');
+                        }
                         
                         // 重新渲染当前视图
                         const currentSelectedDate = getCurrentSelectedDate();
@@ -3110,8 +4888,6 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                         if (dayPanel) {
                             renderDayView(currentSelectedDate, dayPanel);
                         }
-                        
-                        // alert('任务已重新标记为计划中！');
                     }
                 }
             }
@@ -3175,32 +4951,69 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 taskEl.className = 'day-task pending';
                 taskEl.innerHTML = `
                     <div class="task-info">
-                        <div class="task-time">${item.subtask.startTime ? item.subtask.startTime + ' -' : ''}</div>
                         <div class="task-content">${item.projectName}: <span>(${item.subtask.name})</span></div>
                     </div>
-                    <div class="task-meta">${item.subtask.consumingTime}分钟</div>
+                    <div class="task-meta">
+                        <div>${item.subtask.startTime ? item.subtask.startTime : ''}</div>
+                        <div>${item.subtask.consumingTime}分钟<span style="color: #FFD700; margin-left: 8px;">⭐${item.subtask.base_points || 5}</span></div>
+                    </div>
                 `;
-                // 添加点击事件以打开完成确认弹窗
-                taskEl.addEventListener('click', () => openCompleteTaskModal(item));
+                // 添加右键点击事件以打开完成确认弹窗
+                taskEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // 阻止默认右键菜单
+                    openCompleteTaskModal(item);
+                });
                 pendingContainer.appendChild(taskEl);
             });
             // 渲染待补做任务
             const toCompleteContainer = document.createElement('div');
             toCompleteContainer.className = 'task-group toComplete';
-            toCompleteContainer.innerHTML = `<h4>待补做 (${toCompleteTasks.length})</h4>`;
+            
+            // 创建标题容器
+            const titleContainer = document.createElement('div');
+            titleContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 5px 0;';
+            
+            const titleText = document.createElement('h4');
+            titleText.textContent = `待补做 (${toCompleteTasks.length})`;
+            titleText.style.margin = '0';
+            
+            const arrowIcon = document.createElement('span');
+            arrowIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-down"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>';
+            arrowIcon.style.cssText = 'color: #666; transition: transform 0.3s ease; margin-right: 10px; transform: rotate(180deg);';
+            
+            titleContainer.appendChild(titleText);
+            titleContainer.appendChild(arrowIcon);
+            toCompleteContainer.appendChild(titleContainer);
+            
+            // 创建任务内容容器
+            const tasksContent = document.createElement('div');
+            tasksContent.className = 'toComplete-content';
+            tasksContent.style.display = 'none'; // 默认隐藏
+            
+            // 添加点击事件切换显示/隐藏
+            titleContainer.addEventListener('click', () => {
+                const isHidden = tasksContent.style.display === 'none';
+                tasksContent.style.display = isHidden ? 'block' : 'none';
+                arrowIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
             
             toCompleteTasks.forEach(item => {
                 const taskEl = document.createElement('div');
                 taskEl.className = 'day-task to-complete';
                 taskEl.innerHTML = `
                     <div class="task-info">
-                        <div class="task-time">${item.subtask.completeTime} -</div>
                         <div class="task-content">${item.projectName}: <span style="color:#ff9800; background-color: rgba(255, 152, 0, 0.1);">(${item.subtask.name})</span></div>
                     </div>
-                    <div class="task-meta">${item.subtask.consumingTime}分钟</div>
+                    <div class="task-meta">
+                        <div>${item.subtask.completeTime ? item.subtask.completeTime : ''}</div>
+                        <div>${item.subtask.consumingTime}分钟<span style="color: #FFD700; margin-left: 8px;">⭐${item.subtask.base_points || 5}</span></div>
+                    </div>
                 `;
-                taskEl.addEventListener('click', () => openCompleteTaskModal(item));
-                toCompleteContainer.appendChild(taskEl);
+                taskEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // 阻止默认右键菜单
+                    openCompleteTaskModal(item);
+                });
+                tasksContent.appendChild(taskEl);
             });
             
             if (toCompleteTasks.length === 0) {
@@ -3210,7 +5023,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 emptyEl.style.textAlign = 'center';
                 emptyEl.style.padding = '10px';
                 emptyEl.style.color = '#999';
-                toCompleteContainer.appendChild(emptyEl);
+                tasksContent.appendChild(emptyEl);
             }
             
                 dayContainer.appendChild(pendingContainer);
@@ -3227,7 +5040,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                         <div class="task-time"></div>
                         <div class="task-content">${item.projectName}: <span>(${item.subtask.name})</span></div>
                     </div>
-                    <div class="task-meta">${item.subtask.consumingTime}分钟</div>
+                    <div class="task-meta">${item.subtask.consumingTime}分钟<span style="color: #FFD700; margin-left: 8px;">⭐${item.subtask.base_points || 5}</span></div>
                 `;
                 
                 // 为已完成任务添加右键点击事件
@@ -3239,6 +5052,7 @@ document.getElementById('confirmSettingsBtn').addEventListener('click', function
                 completedContainer.appendChild(taskEl);
             });
             dayContainer.appendChild(completedContainer);
+            toCompleteContainer.appendChild(tasksContent);
             dayContainer.appendChild(toCompleteContainer);
 
             // 应用保存的字体大小到新创建的任务元素
@@ -3388,7 +5202,7 @@ function toggleYearSelection(picker, currentYear) {
                     <div class="nav-buttons">
                         <button class="nav-btn" id="prevBtn"> ◀︎ </button>
                         <button class="nav-btn" id="todayBtn">今天</button>
-                        <button class="nav-btn" id="nextBtn"> ▶︎ </button><button class="nav-btn" id="settingsBtn">
+                        <button class="nav-btn" id="nextBtn"> ▶︎ </button><button class="nav-btn" id="calendarsettingBtn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-settings settings-icon">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                                 <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
@@ -3488,11 +5302,40 @@ function toggleYearSelection(picker, currentYear) {
             const lastDay = new Date(year, month + 1, 0);
             const firstDayOfWeek = firstDay.getDay() || 7; // 周一为1，周日为7
 
-            // 添加上月占位
+            // 添加上月占位（显示上个月的日期）
+            const prevMonth = new Date(year, month - 1, 0); // 上个月的最后一天
+            const prevMonthLastDay = prevMonth.getDate();
+            
             for (let i = 1; i < firstDayOfWeek; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'calendar-cell empty';
-                monthGrid.appendChild(emptyCell);
+                const prevMonthCell = document.createElement('div');
+                prevMonthCell.className = 'calendar-cell prev-month';
+                
+                // 设置浅灰色样式且不可点击
+                prevMonthCell.style.backgroundColor = '#f5f5f5';
+                prevMonthCell.style.color = '#ccc';
+                prevMonthCell.style.cursor = 'default';
+                prevMonthCell.style.opacity = '0.6';
+                prevMonthCell.style.position = 'relative';
+                
+                // 计算上个月的日期
+                const prevDay = prevMonthLastDay - (firstDayOfWeek - 1 - i);
+                
+                // 创建日期单元格内容
+                const cellHeader = document.createElement('div');
+                cellHeader.className = 'cell-header';
+                cellHeader.textContent = prevDay;
+                cellHeader.style.color = '#ccc';
+                cellHeader.style.borderBottomColor = '#e5e5e5';
+                
+                prevMonthCell.appendChild(cellHeader);
+                
+                // 移除hover效果
+                prevMonthCell.addEventListener('mouseenter', (e) => {
+                    e.target.style.backgroundColor = '#f5f5f5';
+                    e.target.style.boxShadow = 'none';
+                });
+                
+                monthGrid.appendChild(prevMonthCell);
             }
 
             // 添加当月日期
@@ -3735,11 +5578,11 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                         progressEl.innerHTML = `<span style="font-weight: bold;">${totalCount}</span>`;
                         progressEl.style.backgroundColor = '#e8f5e8';
                         
-                        // 创建绿色√图标并添加到容器外面左边
+                        // 创建绿色√图标并添加到容器最左侧
                         const greenCheck = document.createElement('div');
                         greenCheck.className = 'green-check-outside';
                         greenCheck.style.position = 'absolute';
-                        greenCheck.style.left = '-8px';
+                        greenCheck.style.left = '2px';
                         greenCheck.style.top = '50%';
                         greenCheck.style.transform = 'translateY(-50%)';
                         greenCheck.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3751,11 +5594,11 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                         // 未完成且日期已过时（但不是今天）显示红色圆点脉冲和红色已完成数
                         progressEl.innerHTML = `<span style="color: #ff4444;">${completedCount}</span> / <span style="font-weight: bold;"> ${totalCount}</span>`;
                         
-                        // 创建红色圆点并添加到容器外面左边
+                        // 创建红色圆点并添加到容器最左侧
                         const redDot = document.createElement('div');
                         redDot.className = 'red-dot-outside';
                         redDot.style.position = 'absolute';
-                        redDot.style.left = '-8px';
+                        redDot.style.left = '2px';
                         redDot.style.top = '50%';
                         redDot.style.transform = 'translateY(-50%)';
                         redDot.style.width = '6px';
@@ -3795,6 +5638,48 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                 // 设置单元格为相对定位，使内部绝对定位元素生效
                 cell.style.position = 'relative';
                 monthGrid.appendChild(cell);
+            }
+
+            // 添加下月占位（填满剩余的网格位置）
+            const totalCells = 42; // 6行 × 7列
+            const currentCells = (firstDayOfWeek - 1) + lastDay.getDate();
+            const remainingCells = totalCells - currentCells;
+            
+            // 检查第七行是否全部是下个月的日期
+            const seventhRowStart = 35; // 第七行开始位置（0-based index）
+            const isSeventhRowAllNextMonth = currentCells <= seventhRowStart;
+            
+            // 如果第七行全部是下个月的日期，则只显示到第六行
+            const maxCellsToShow = isSeventhRowAllNextMonth ? seventhRowStart : totalCells;
+            const cellsToAdd = Math.min(remainingCells, maxCellsToShow - currentCells);
+            
+            for (let day = 1; day <= cellsToAdd; day++) {
+                const nextMonthCell = document.createElement('div');
+                nextMonthCell.className = 'calendar-cell next-month';
+                
+                // 设置浅灰色样式且不可点击
+                nextMonthCell.style.backgroundColor = '#f5f5f5';
+                nextMonthCell.style.color = '#ccc';
+                nextMonthCell.style.cursor = 'default';
+                nextMonthCell.style.opacity = '0.6';
+                nextMonthCell.style.position = 'relative';
+                
+                // 创建日期单元格内容
+                const cellHeader = document.createElement('div');
+                cellHeader.className = 'cell-header';
+                cellHeader.textContent = day;
+                cellHeader.style.color = '#ccc';
+                cellHeader.style.borderBottomColor = '#e5e5e5';
+                
+                nextMonthCell.appendChild(cellHeader);
+                
+                // 移除hover效果
+                nextMonthCell.addEventListener('mouseenter', (e) => {
+                    e.target.style.backgroundColor = '#f5f5f5';
+                    e.target.style.boxShadow = 'none';
+                });
+                
+                monthGrid.appendChild(nextMonthCell);
             }
 
             monthPanel.appendChild(monthGrid);
@@ -3848,7 +5733,7 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
             const todayBtn = document.getElementById('todayBtn');
-            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsBtn = document.getElementById('calendarsettingBtn');
             
             if (prevBtn) {
                 prevBtn.removeEventListener('click', prevBtn._navigateHandler);
@@ -3874,7 +5759,7 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                     // 每次打开设置弹窗时都重新初始化数据
                     initSettingsData();
                     
-                    const modal = document.getElementById('settingsModal');
+                    const modal = document.getElementById('calendarSettingModal');
                     const overlay = document.getElementById('modalOverlay');
                     
                     if (modal && overlay) {
@@ -3900,8 +5785,6 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 初始化导航菜单功能
-            initNavigationMenu();
             
             // 解析URL参数中的日期
             const urlParams = new URLSearchParams(window.location.search);
@@ -3932,72 +5815,7 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
         });
 
         // 导航菜单功能
-        function initNavigationMenu() {
-            const menuItems = document.querySelectorAll('.nav-menu-item');
-            const slider = document.querySelector('.nav-slider');
-            const panels = document.querySelectorAll('.content-panel');
-            let activeIndex = 0;
-            // 读取本地存储
-            const savedIndex = localStorage.getItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX);
-            if (savedIndex !== null && !isNaN(savedIndex) && menuItems[savedIndex]) {
-                activeIndex = parseInt(savedIndex);
-            }
-            // 激活初始菜单
-            menuItems.forEach((item, idx) => {
-                item.classList.toggle('active', idx === activeIndex);
-                panels[idx] && panels[idx].classList.toggle('active', idx === activeIndex);
-            });
-            moveSlider(activeIndex);
-            
-            // 如果初始激活的是项目管理页面，初始化项目管理面板
-            if (menuItems[activeIndex] && menuItems[activeIndex].getAttribute('data-tab') === 'project') {
-                initProjectPanel();
-            }
-            // 菜单点击事件
-            menuItems.forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    // 移除所有活动状态
-                    menuItems.forEach(i => i.classList.remove('active'));
-                    panels.forEach(p => p.classList.remove('active'));
-                    // 添加当前活动状态
-                    item.classList.add('active');
-                    if (panels[index]) panels[index].classList.add('active');
-                    // 移动滑块
-                    moveSlider(index);
-                    // 存储当前索引
-                    localStorage.setItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX, index);
-                    // 触发自动备份
-                    triggerAutoBackup();
-                    // 更新存储使用量显示
-                    updateStorageUsageDisplay();
-                    
-                    // 如果切换到项目管理页面，重新初始化项目管理面板
-                    if (item.getAttribute('data-tab') === 'project') {
-                        initProjectPanel();
-                    }
-                    
-                    // 如果切换到首页，更新统计卡片
-                    if (item.getAttribute('data-tab') === 'home') {
-                        updateStatsCards();
-                    }
-                });
-            });
-            // 窗口变化时滑块自适应
-            window.addEventListener('resize', () => {
-                const idx = [...menuItems].findIndex(i => i.classList.contains('active'));
-                moveSlider(idx);
-            });
-            function moveSlider(index) {
-                const item = menuItems[index];
-                if (!item) return;
-                const menuRect = item.parentElement.getBoundingClientRect();
-                const itemRect = item.getBoundingClientRect();
-                const left = item.offsetLeft;
-                const width = Math.max(0, item.offsetWidth - 100);
-                slider.style.width = width + 'px';
-                slider.style.transform = `translateX(${left + 50}px)`;
-            }
-        }
+
 
         // 添加计划弹窗相关变量
         let currentPlannedTasks = [];
@@ -4262,7 +6080,7 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                 projectListContent.appendChild(endTip);
             }
             
-            // 更新项目清单标题中的数量
+            // 更新目标清单标题中的数量
             updateProjectListTitle(filteredProjects.length);
         }
 
@@ -5024,6 +6842,39 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                     if (subtaskIndex !== -1) {
                         project.subtasks[subtaskIndex].status = 1;
                         project.subtasks[subtaskIndex].completeTime = completeTime;
+                        
+                        // 获取任务积分并增加到用户积分中
+                        const taskPoints = project.subtasks[subtaskIndex].base_points || getBasePoints();
+                        console.log('任务积分:', taskPoints);
+                        
+                        if (window.userManager && window.userManager.currentUser) {
+                            const currentPoints = window.userManager.getUserPoints();
+                            console.log('当前积分:', currentPoints);
+                            
+                            // 使用积分变化量而不是新的总积分值
+                            window.userManager.updateUserPoints(taskPoints);
+                            console.log('积分已更新，增加了', taskPoints, '积分');
+                            
+                            // 显示积分特效
+                            showPointsEffect(taskPoints);
+                            console.log('积分特效已调用');
+                            
+                            // 延迟0.1秒播放音频
+                            setTimeout(() => {
+                                try {
+                                    const audio = new Audio('./audio/getpoints.WAV');
+                                    audio.volume = 0.5; // 设置音量为50%
+                                    audio.play().catch(error => {
+                                        console.log('音频播放失败:', error);
+                                    });
+                                } catch (error) {
+                                    console.log('音频加载失败:', error);
+                                }
+                            }, 100);
+                        } else {
+                            console.error('userManager 或 currentUser 不存在');
+                        }
+                        
                         saveProjects(projects);
                     }
                 }
@@ -5048,6 +6899,19 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
         // 标记子任务为计划中
         function markSubtaskPlanned(subtask) {
             if (confirm(`确定要将任务"${subtask.name}"重新标记为计划中吗？`)) {
+                // 播放退回积分音频
+                setTimeout(() => {
+                    try {
+                        const audio = new Audio('./audio/backpoints.WAV');
+                        audio.volume = 0.5; // 设置音量为50%
+                        audio.play().catch(error => {
+                            console.log('音频播放失败:', error);
+                        });
+                    } catch (error) {
+                        console.log('音频加载失败:', error);
+                    }
+                }, 100); // 延迟0.1秒播放音频
+                
                 // 更新子任务状态为计划中
                 subtask.status = 0;
                 // 保留完成日期作为计划日期
@@ -5058,16 +6922,46 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
                 if (project && project.subtasks) {
                     const subtaskIndex = project.subtasks.findIndex(s => s.uniqueId === subtask.uniqueId);
                     if (subtaskIndex !== -1) {
+                        // 获取任务积分
+                        const taskPoints = project.subtasks[subtaskIndex].base_points || getBasePoints();
+                        
                         project.subtasks[subtaskIndex].status = 0;
                         // 保留completeTime作为计划日期
+                        
+                        // 扣减用户积分
+                        console.log('开始扣减积分流程');
+                        console.log('任务积分:', taskPoints);
+                        console.log('userManager存在:', !!window.userManager);
+                        console.log('currentUser存在:', !!window.userManager?.currentUser);
+                        
+                        if (taskPoints > 0 && window.userManager && window.userManager.currentUser) {
+                            const currentPoints = window.userManager.getUserPoints();
+                            console.log('当前积分:', currentPoints);
+                            
+                            // 使用负数积分变化量来扣减积分
+                            const success = window.userManager.updateUserPoints(-taskPoints);
+                            if (success) {
+                                console.log('积分更新完成，扣减了', taskPoints, '积分');
+                                showMessage(`任务已退回计划中，扣减 ${taskPoints} 积分`, 'warning');
+                            } else {
+                                console.log('积分不足，无法扣减');
+                                showMessage('积分不足，无法扣减', 'error');
+                            }
+                        } else {
+                            console.log('积分扣减条件不满足:', {
+                                taskPoints,
+                                userManagerExists: !!window.userManager,
+                                currentUserExists: !!window.userManager?.currentUser
+                            });
+                            showMessage('任务已重新标记为计划中', 'success');
+                        }
+                        
                         saveProjects(projects);
                     }
                 }
                 
                 // 重新渲染子任务列表
                 renderSubtaskList(currentSelectedProject);
-                
-                alert('任务已重新标记为计划中！');
             }
         }
 
@@ -5164,9 +7058,6 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
 
     // 确保DOM加载完成后执行
     document.addEventListener('DOMContentLoaded', function() {
-        const slider = document.getElementById('fontSizeSlider');
-        const valueDisplay = document.getElementById('fontSizeValue');
-
         // 动态获取任务元素的函数
         function getTaskElements() {
             return document.querySelectorAll('.day-task, .task-info');
@@ -5187,43 +7078,63 @@ if (!seenTasks.has(taskKey) && taskDateStr === dateStr && subtask.name && subtas
             }
         }
 
-        if (slider && valueDisplay) {
-            // 滑块事件监听
-            slider.addEventListener('input', function() {
-                const fontSize = this.value + 'px';
-                valueDisplay.textContent = fontSize;
+        // 将initFontSizeSettings移到全局作用域
+        window.initFontSizeSettings = function() {
+            const fontSizeSelect = document.getElementById('fontSizeSelect');
+            const fontPreview = document.getElementById('fontPreview');
+            
+            if (fontSizeSelect && fontPreview) {
+                // 移除之前的事件监听器（如果存在）
+                const newSelect = fontSizeSelect.cloneNode(true);
+                fontSizeSelect.parentNode.replaceChild(newSelect, fontSizeSelect);
                 
-                // 应用到所有任务元素
-                const tasks = getTaskElements();
-                tasks.forEach(task => {
-                    task.style.fontSize = fontSize;
+                // 下拉选择框事件监听
+                newSelect.addEventListener('change', function() {
+                    const fontSize = this.value + 'px';
+                    
+                    // 更新预览效果
+                    fontPreview.style.fontSize = fontSize;
+                    
+                    // 应用到所有任务元素
+                    const tasks = getTaskElements();
+                    tasks.forEach(task => {
+                        task.style.fontSize = fontSize;
+                    });
+                    
+                    // 保存设置到本地存储
+                    try {
+                        localStorage.setItem(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE, fontSize);
+                        // 触发自动备份
+                        triggerAutoBackup();
+                        // 更新存储使用量显示
+                        updateStorageUsageDisplay();
+                    } catch (e) {
+                        console.warn('无法保存字体大小设置:', e);
+                    }
                 });
-                
-                // 保存设置到本地存储
-                try {
-                    localStorage.setItem(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE, fontSize);
-                    // 触发自动备份
-                    triggerAutoBackup();
-                    // 更新存储使用量显示
-                    updateStorageUsageDisplay();
-                } catch (e) {
-                    console.warn('无法保存字体大小设置:', e);
-                }
-            });
 
-            // 页面加载时恢复保存的设置
-            try {
-                const savedSize = localStorage.getItem(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE);
-                if (savedSize) {
-                    slider.value = parseInt(savedSize);
-                    valueDisplay.textContent = savedSize;
-                    applySavedFontSize();
+                // 页面加载时恢复保存的设置
+                try {
+                    const savedSize = localStorage.getItem(CONFIG.STORAGE_KEYS.TASK_FONT_SIZE);
+                    if (savedSize) {
+                        const sizeValue = parseInt(savedSize);
+                        newSelect.value = sizeValue;
+                        fontPreview.style.fontSize = savedSize;
+                        applySavedFontSize();
+                    } else {
+                        // 设置默认字体预览
+                        fontPreview.style.fontSize = '14px';
+                    }
+                } catch (e) {
+                    console.warn('无法恢复字体大小设置:', e);
+                    fontPreview.style.fontSize = '14px';
                 }
-            } catch (e) {
-            console.warn('无法恢复字体大小设置:', e);
-        }
-    }
-});
+            }
+        };
+
+        // 初始化字体大小设置（延迟执行以确保DOM元素已创建）
+        setTimeout(initFontSizeSettings, 100);
+    });
 
 // 项目管理面板功能
 let currentSelectedProjectPanel = null;
@@ -5236,6 +7147,7 @@ let projectPanelSelectedCategory = '';
 function initProjectPanel() {
     renderProjectPanelList();
     renderProjectPanelCategoryTags();
+    renderProjectTagsContainer();
     bindProjectPanelEvents();
     // 显示默认项目选择提示
     showDefaultProjectMessage();
@@ -5347,33 +7259,134 @@ function renderProjectPanelList() {
             </svg>` : '';
         
         projectCard.innerHTML = `
-            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    ${checkIcon}
-                    <span style="
-                        color: #666; 
-                        font-size: 14px; 
-                        font-weight: normal; 
-                        margin-right: 4px;
-                        opacity: 0.8;
-                        font-family: 'Courier New', monospace;
-                    ">${index + 1}.</span>
-                    <div style="font-weight: bold;">${project.name}</div>
+            <!-- 项目名称行 -->
+            <div class="project-title-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding-bottom:3px;border-bottom: 1px dashed rgb(226, 226, 226);">
+                
+                <span style="
+                    color: #666; 
+                    font-size: 14px; 
+                    font-weight: normal; 
+                    margin-right: 4px;
+                    opacity: 0.8;
+                    font-family: 'Courier New', monospace;
+                ">${index + 1}.</span>
+                <div style="font-weight: bold; ">
+                    ${checkIcon} ${warningIcon} ${project.name}
+                    <span style="color:rgb(0, 81, 255); font-size: 12px; font-weight: normal; margin-left: 8px;">
+                        已完成${completedTasks}/${totalTasks}
+                    </span>
                 </div>
-                <div style="display: flex; align-items: flex-start; gap: 8px;">
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                        <div style="width: 120px; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${completionRate}%; height: 100%; background: #50b767; transition: width 0.3s ease;"></div>
-                        </div>
-                        <div style="font-size: 12px; color: #ff8c00; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
-                            已完成 ${completedTasks}/${totalTasks}
-                            ${warningIcon}
+            </div>
+            <!-- 功能控制行 -->
+            <div class="project-controls-row" style="display: flex; align-items: flex-start; gap: 8px; justify-content: flex-end;">
+                
+                <!-- 周完成状态圆圈容器 -->
+                <div class="weekday-circles-container" style="margin-top: -5px;" title="近10天任务完成情况">
+                    <div class="weekday-circles-row">
+                        ${(() => {
+                            // 计算近10天的完成情况（过去6天 + 今天 + 未来3天）
+                            const today = new Date();
+                            const tenDaysData = [];
+                            
+                            // 生成10天的日期数组
+                            for (let i = -6; i <= 3; i++) {
+                                const date = new Date(today);
+                                date.setDate(today.getDate() + i);
+                                tenDaysData.push({
+                                    date: date,
+                                    dayNumber: date.getDate(),
+                                    isToday: i === 0,
+                                    isPast: i < 0,
+                                    isFuture: i > 0,
+                                    status: 'none' // none, completed, planned
+                                });
+                            }
+                            
+                            // 检查任务状态 - 重新设计逻辑
+                            tenDaysData.forEach(dayData => {
+                                const dayStart = new Date(dayData.date);
+                                dayStart.setHours(0, 0, 0, 0);
+                                const dayEnd = new Date(dayData.date);
+                                dayEnd.setHours(23, 59, 59, 999);
+                                
+                                let hasCompletedTask = false;
+                                let hasPlannedTask = false;
+                                
+                                // 遍历所有任务，检查当前日期的任务状态
+                                project.subtasks.forEach(task => {
+                                    const completeDate = task.completeTime ? new Date(task.completeTime) : null;
+                                    
+                                    // 检查已完成任务（status=1且有完成时间）
+                                    if ((task.status === 1 || task.status === '1') && completeDate && 
+                                        completeDate >= dayStart && completeDate <= dayEnd) {
+                                        hasCompletedTask = true;
+                                    }
+                                    
+                                    // 检查计划中任务（status=0且有completeTime日期值）
+                                    if ((task.status === 0 || task.status === '0') && completeDate && 
+                                        completeDate >= dayStart && completeDate <= dayEnd) {
+                                        hasPlannedTask = true;
+                                    }
+                                });
+                                
+                                // 按优先级设置状态：已完成 > 计划中 > 未完成
+                                if (hasCompletedTask) {
+                                    dayData.status = 'completed';
+                                } else if (hasPlannedTask) {
+                                    dayData.status = 'planned';
+                                } else {
+                                    dayData.status = 'none';
+                                }
+                            });
+                            
+
+                            
+                            return tenDaysData.map(dayData => {
+                                const { dayNumber, isToday, status } = dayData;
+                                
+                                if (isToday) {
+                                    // 今天：橙色实线圆圈
+                                    if (status === 'completed') {
+                                        return `<div class="weekday-circle today-completed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+                                    } else if (status === 'planned') {
+                                        return `<div class="weekday-circle today-circle">${dayNumber}</div>`;
+                                    } else {
+                                        return `<div class="weekday-circle today-circle">${dayNumber}</div>`;
+                                    }
+                                } else if (status === 'completed') {
+                                    // 已完成：绿色实线圆圈 + 勾选图标
+                                    return `<div class="weekday-circle completed-solid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+                                } else if (status === 'planned') {
+                                    // 计划中：绿色虚线圆圈 + 日期
+                                    return `<div class="weekday-circle planned-dashed">${dayNumber}</div>`;
+                                } else {
+                                    // 未完成：灰色虚线圆圈 + 日期
+                                    return `<div class="weekday-circle gray-dashed">${dayNumber}</div>`;
+                                }
+                            }).join('');
+                        })()} 
+                    </div>
+                </div>
+                <!-- 进度圆环 -->
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                    <div style="position: relative; width: 30px; height: 30px;">
+                        <svg width="30" height="30" style="transform: rotate(-90deg);">
+                            <circle cx="15" cy="15" r="12" fill="none" stroke="#f0f0f0" stroke-width="3"></circle>
+                            <circle cx="15" cy="15" r="12" fill="none" stroke="#50b767" stroke-width="3" 
+                                    stroke-dasharray="${2 * Math.PI * 12}" 
+                                    stroke-dashoffset="${2 * Math.PI * 12 * (1 - completionRate / 100)}" 
+                                    style="transition: stroke-dashoffset 0.3s ease;"></circle>
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                    font-size: 8px; font-weight: bold; color: #333;">
+                            ${Math.round(completionRate)}%
                         </div>
                     </div>
-                    <div class="project-card-actions">
-                        <div class="project-action-btn" title="编辑项目" data-action="edit" data-project-id="${project.id || project.name}">✏️</div>
-                        <div class="project-action-btn" title="项目详情" data-action="details" data-project-id="${project.id || project.name}">📋</div>
-                    </div>
+                </div>
+                <!-- 操作按钮 -->
+                <div class="project-card-actions">
+                    <div class="project-action-btn" title="编辑项目" data-action="edit" data-project-id="${project.id || project.name}">✏️</div>
+                    <div class="project-action-btn" title="项目详情" data-action="details" data-project-id="${project.id || project.name}">📋</div>
                 </div>
             </div>
         `;
@@ -5449,7 +7462,7 @@ function renderProjectPanelList() {
         projectList.appendChild(endTip);
     }
     
-    // 更新项目清单标题中的数量
+    // 更新目标清单标题中的数量
     updateProjectListTitle(filteredProjects.length);
     
     // 检查滚动状态并应用相应的样式
@@ -5555,6 +7568,98 @@ function initProjectListScrollListener() {
 }
 
 // 渲染项目管理面板的分类标签
+// 渲染项目标签筛选器（基于tags字段）
+function renderProjectTagsContainer() {
+    const tagsContainer = document.getElementById('projectTagsContainer');
+    if (!tagsContainer) return;
+    
+    const projects = getProjects();
+    const allCategories = new Set();
+    
+    // 从项目数据中提取所有分类
+    projects.forEach(project => {
+        // 使用项目的category字段
+        const category = project.category || '未分类';
+        allCategories.add(category);
+    });
+    
+    const uniqueCategories = Array.from(allCategories).sort();
+    
+    tagsContainer.innerHTML = '';
+    
+    // 添加"全部"分类
+    const allTag = document.createElement('button');
+    allTag.className = 'tag-filter-btn';
+    allTag.textContent = `全部 (${projects.length})`;
+    allTag.dataset.category = 'all';
+    allTag.style.cssText = `
+        padding: 4px 12px;
+        border: 1px solid #007bff;
+        background: white;
+        color: #007bff;
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-right: 6px;
+        margin-bottom: 6px;
+    `;
+    allTag.addEventListener('click', () => {
+        // 重置所有分类按钮状态
+        document.querySelectorAll('#projectTagsContainer .tag-filter-btn').forEach(btn => {
+            btn.style.background = 'white';
+            btn.style.color = '#007bff';
+        });
+        // 激活当前按钮
+        allTag.style.background = '#007bff';
+        allTag.style.color = 'white';
+        // 这里可以添加筛选逻辑
+        console.log('筛选全部项目');
+    });
+    // 默认激活"全部"按钮
+    allTag.style.background = '#007bff';
+    allTag.style.color = 'white';
+    tagsContainer.appendChild(allTag);
+    
+    // 添加分类按钮
+    uniqueCategories.forEach(category => {
+        const categoryCount = projects.filter(project => {
+            const projectCategory = project.category || '未分类';
+            return projectCategory === category;
+        }).length;
+        
+        const categoryBtn = document.createElement('button');
+        categoryBtn.className = 'tag-filter-btn';
+        categoryBtn.textContent = `${category} (${categoryCount})`;
+        categoryBtn.dataset.category = category;
+        categoryBtn.style.cssText = `
+            padding: 4px 12px;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        `;
+        categoryBtn.addEventListener('click', () => {
+            // 重置所有分类按钮状态
+            document.querySelectorAll('#projectTagsContainer .tag-filter-btn').forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = '#007bff';
+            });
+            // 激活当前按钮
+            categoryBtn.style.background = '#007bff';
+            categoryBtn.style.color = 'white';
+            // 这里可以添加筛选逻辑
+            console.log('筛选分类:', category);
+        });
+        tagsContainer.appendChild(categoryBtn);
+    });
+}
+
 function renderProjectPanelCategoryTags() {
     const categoryTagsContainer = document.getElementById('projectPanelCategoryTags');
     if (!categoryTagsContainer) return;
@@ -5647,6 +7752,14 @@ function updateCategoryTags() {
             tag.classList.add('active');
         }
     });
+}
+
+// 更新目标清单标题中的数量
+function updateGoalListTitle(count) {
+    const titleElement = document.querySelector('.project-list-header h3');
+    if (titleElement) {
+        titleElement.textContent = `目标清单(${count})`;
+    }
 }
 
 // 更新项目清单标题中的数量
@@ -5766,7 +7879,27 @@ function renderProjectPanelSubtaskList(project) {
     
     if (project.subtasks && project.subtasks.length > 0) {
         let needsSave = false;
-        project.subtasks.forEach((subtask, index) => {
+        
+        // 对子任务进行排序：status非1的排在前面，已完成的在后面，按completeTime从新到旧排序（7-30、7-29、7-25、7-18）
+        const sortedSubtasks = [...project.subtasks].sort((a, b) => {
+            // 首先按状态排序：status非1的排在前面
+            if (a.status !== 1 && b.status === 1) return -1;
+            if (a.status === 1 && b.status !== 1) return 1;
+            
+            // 如果状态相同，按completeTime排序（从新到旧）
+            const timeA = a.completeTime ? new Date(a.completeTime).getTime() : 0;
+            const timeB = b.completeTime ? new Date(b.completeTime).getTime() : 0;
+            
+            // 如果都没有completeTime，保持原有顺序
+            if (timeA === 0 && timeB === 0) return 0;
+            // 没有completeTime的排在后面
+            if (timeA === 0) return 1;
+            if (timeB === 0) return -1;
+            // 按时间从晚到早排序（最新日期在前面）
+            return timeB - timeA;
+        });
+        
+        sortedSubtasks.forEach((subtask, index) => {
             // 确保每个子任务都有唯一标识符
             if (!subtask.uniqueId) {
                 subtask.uniqueId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -5805,7 +7938,12 @@ function renderProjectPanelSubtaskList(project) {
             subtaskCard.title = titleText;
             
             subtaskCard.innerHTML = `
-                <div style="position: relative; padding-right: ${completionDate ? '30px' : '8px'};">
+                <div style="position: relative; padding-right: ${completionDate ? '30px' : '8px'}; ${subtask.status === 1 ? 'padding-left: 25px;' : ''}">
+                    ${subtask.status === 1 ? `<div style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; z-index: 1;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="m9 12 2 2 4-4" stroke="#28a745" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>` : ''}
                     ${completionDate ? `<div style="position: absolute; top: -2px; right: -8px; font-size: 10px; color: ${subtask.status === 0 ? '#28a745' : '#ff6b6b'}; font-weight: bold; background: ${subtask.status === 0 ? '#e8f5e8' : 'rgba(255, 255, 255, 0.9)'}; padding: 2px 4px; border-radius: 3px; border: ${subtask.status === 0 ? 'none' : '1px solid #ffebee'}; white-space: nowrap;">${completionDate}</div>` : ''}
                     <div style="font-weight: bold; word-wrap: break-word;">${subtask.name}</div>
                 </div>
@@ -5877,6 +8015,7 @@ function showProjectSubtaskContextMenu(e, subtask, project) {
     tempMenu.innerHTML = `
         <div style="padding: 10px 16px;">📝 修改任务名称</div>
         <div style="padding: 10px 16px;">🗓️ 添加计划</div>
+        <div style="padding: 10px 16px;">🎯 修改积分</div>
         <div style="padding: 10px 16px;">✔️ 标记完成</div>
         <div style="padding: 10px 16px;">🔕 取消计划</div>
         <div style="padding: 10px 16px;">❌ 删除任务</div>
@@ -5931,6 +8070,7 @@ function showProjectSubtaskContextMenu(e, subtask, project) {
         menuItems.push(
             { icon: '📝', text: '修改任务名称', action: 'editName' },
             { icon: '🗓️', text: '修改时间', action: 'editTime' },
+            { icon: '🎯', text: '修改积分', action: 'editPoints' },
             { icon: '↩️', text: '退回计划', action: 'backToPlan' },
             { icon: '🔕', text: '取消计划', action: 'cancelPlan' },
             { icon: '❌', text: '删除任务', action: 'deleteTask' }
@@ -5940,6 +8080,7 @@ function showProjectSubtaskContextMenu(e, subtask, project) {
         menuItems.push(
             { icon: '📝', text: '修改任务名称', action: 'editName' },
             { icon: '🗓️', text: '添加计划', action: 'addPlan' },
+            { icon: '🎯', text: '修改积分', action: 'editPoints' },
             { icon: '✔️', text: '标记完成', action: 'markComplete' },
             { icon: '🔕', text: '取消计划', action: 'cancelPlan' },
             { icon: '❌', text: '删除任务', action: 'deleteTask' }
@@ -6087,7 +8228,53 @@ function handleSubtaskContextAction(action, subtask, project) {
              
          case 'backToPlan':
              if (confirm(`确定要将任务"${subtask.name}"退回到计划中吗？`)) {
+                 // 播放退回积分音频
+                 setTimeout(() => {
+                     try {
+                         const audio = new Audio('./audio/backpoints.WAV');
+                         audio.volume = 0.5; // 设置音量为50%
+                         audio.play().catch(error => {
+                             console.log('音频播放失败:', error);
+                         });
+                     } catch (error) {
+                         console.log('音频加载失败:', error);
+                     }
+                 }, 100); // 延迟0.1秒播放音频
+                 
+                 // 获取任务积分
+                 const taskPoints = projects[projectIndex].subtasks[subtaskIndex].base_points || getBasePoints();
+                 
                  projects[projectIndex].subtasks[subtaskIndex].status = 0;
+                 
+                 // 扣减用户积分
+                 console.log('开始扣减积分流程');
+                 console.log('任务积分:', taskPoints);
+                 console.log('userManager存在:', !!window.userManager);
+                 console.log('currentUser存在:', !!window.userManager?.currentUser);
+                 
+                 if (taskPoints > 0 && window.userManager && window.userManager.currentUser) {
+                     const currentPoints = window.userManager.getUserPoints();
+                     console.log('当前积分:', currentPoints);
+                     
+                     // 使用负数积分变化量来扣减积分
+                     const success = window.userManager.updateUserPoints(-taskPoints);
+                     if (success) {
+                         console.log('积分更新完成，扣减了', taskPoints, '积分');
+                         // 显示积分扣减提示
+                         showMessage(`任务已退回计划中，扣减 ${taskPoints} 积分`, 'warning');
+                     } else {
+                         console.log('积分不足，无法扣减');
+                         showMessage('任务已重新标记为计划中', 'success');
+                     }
+                 } else {
+                     console.log('积分扣减条件不满足:', {
+                         taskPoints,
+                         userManagerExists: !!window.userManager,
+                         currentUserExists: !!window.userManager?.currentUser
+                     });
+                     showMessage('任务已重新标记为计划中', 'success');
+                 }
+                 
                  saveProjects(projects);
                  renderProjectPanelSubtaskList(projects[projectIndex]);
              }
@@ -6132,6 +8319,39 @@ function handleSubtaskContextAction(action, subtask, project) {
                  projects[projectIndex].subtasks[subtaskIndex].status = 1;
                  projects[projectIndex].subtasks[subtaskIndex].completeTime = confirmedCompleteTime.trim();
                  projects[projectIndex].subtasks[subtaskIndex].consumingTime = parseInt(confirmedConsumingTime.trim());
+                 
+                 // 获取任务积分并增加到用户积分中
+                 const taskPoints = projects[projectIndex].subtasks[subtaskIndex].base_points || getBasePoints();
+                 console.log('任务积分:', taskPoints);
+                 
+                 if (window.userManager && window.userManager.currentUser) {
+                     const currentPoints = window.userManager.getUserPoints();
+                     console.log('当前积分:', currentPoints);
+                     
+                     // 使用积分变化量而不是新的总积分值
+                     window.userManager.updateUserPoints(taskPoints);
+                     console.log('积分已更新，增加了', taskPoints, '积分');
+                     
+                     // 显示积分特效
+                     showPointsEffect(taskPoints);
+                     console.log('积分特效已调用');
+                     
+                     // 延迟0.1秒播放音频
+                     setTimeout(() => {
+                         try {
+                             const audio = new Audio('./audio/getpoints.WAV');
+                             audio.volume = 0.5; // 设置音量为50%
+                             audio.play().catch(error => {
+                                 console.log('音频播放失败:', error);
+                             });
+                         } catch (error) {
+                             console.log('音频加载失败:', error);
+                         }
+                     }, 100);
+                 } else {
+                     console.error('userManager 或 currentUser 不存在');
+                 }
+                 
                  saveProjects(projects);
                  renderProjectPanelSubtaskList(projects[projectIndex]);
              }
@@ -6148,6 +8368,21 @@ function handleSubtaskContextAction(action, subtask, project) {
         case 'deleteTask':
             if (confirm(`确定要删除任务"${subtask.name}"吗？此操作无法撤销。`)) {
                 projects[projectIndex].subtasks.splice(subtaskIndex, 1);
+                saveProjects(projects);
+                renderProjectPanelSubtaskList(projects[projectIndex]);
+            }
+            break;
+            
+        case 'editPoints':
+            const currentPoints = subtask.base_points || getBasePoints();
+            const newPoints = prompt(`请输入任务"${subtask.name}"的新积分值：`, currentPoints);
+            if (newPoints !== null && newPoints.trim() !== '') {
+                const pointsValue = parseInt(newPoints.trim());
+                if (isNaN(pointsValue) || pointsValue < 1 || pointsValue > 100) {
+                    alert('积分值必须是1-100之间的整数');
+                    return;
+                }
+                projects[projectIndex].subtasks[subtaskIndex].base_points = pointsValue;
                 saveProjects(projects);
                 renderProjectPanelSubtaskList(projects[projectIndex]);
             }
@@ -6450,6 +8685,7 @@ function showAddProjectModal() {
         // 重新渲染项目列表
         renderProjectPanelList();
         renderProjectPanelCategoryTags();
+        renderProjectTagsContainer();
         
         modal.remove();
         
@@ -6485,7 +8721,7 @@ function showAddProjectModal() {
 
 // 滚动到选中的项目位置
 function scrollToSelectedProject(projectCard) {
-    // 找到项目清单容器
+    // 找到目标清单容器
     const projectListContainer = document.getElementById('projectPanelList');
     if (!projectListContainer || !projectCard) {
         return;
@@ -7043,11 +9279,29 @@ function showAddTaskModal(project) {
         <div id="manualTab" class="tab-content">
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: bold;">任务数量：</label>
-                <input type="number" id="taskCount" min="1" max="50" value="1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="taskCountMinus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">-</button>
+                    <input type="number" id="taskCount" min="1" max="50" value="5" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                    <button id="taskCountPlus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">+</button>
+                </div>
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: bold;">批量任务名称：</label>
-                <input type="text" id="taskName" placeholder="请输入任务名称" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="text" id="taskName" placeholder="请输入任务名称" value="任务名" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">任务预览区：</label>
+                <div id="taskPreviewArea" style="min-height: 120px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background-color: #f8f9fa; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start;">
+                    <!-- 任务预览卡片将在这里动态生成 -->
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">平均每个任务用时（分钟）：</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="taskTimeMinus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">-</button>
+                    <input type="number" id="taskTime" min="1" max="999" value="10" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                    <button id="taskTimePlus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">+</button>
+                </div>
             </div>
             <div style="background-color: #fff3cd; color: #dc3545; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 14px;">
                 <strong>注意：</strong>批量子任务名称会在生成后自动在名称后面加一个-序号，后期可以自行修改
@@ -7070,6 +9324,14 @@ function showAddTaskModal(project) {
             <div id="taskPreview" style="display: none; margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 10px; font-weight: bold;">任务预览：</label>
                 <div id="taskPreviewList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background-color: #f8f9fa;"></div>
+                <div style="margin-top: 15px; margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">平均每个任务用时（分钟）：</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button id="importTaskTimeMinus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">-</button>
+                        <input type="number" id="importTaskTime" min="1" max="999" value="10" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                        <button id="importTaskTimePlus" style="width: 32px; height: 32px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">+</button>
+                    </div>
+                </div>
                 <button id="confirmImport" style="width: 100%; padding: 10px; background: #50b767; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">确认生成全部任务</button>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -7120,6 +9382,7 @@ function showAddTaskModal(project) {
         safeSubmit(() => {
             const count = parseInt(document.getElementById('taskCount').value);
             const taskName = document.getElementById('taskName').value.trim();
+            const taskTime = parseInt(document.getElementById('taskTime').value) || 10;
             
             if (!count || count <= 0 || count > 50) {
                 alert('请输入有效的任务数量（1-50）');
@@ -7141,10 +9404,11 @@ function showAddTaskModal(project) {
                     name: `${taskName}-${i + 1}`,
                     status: -1,
                     completeTime: today,
-                    consumingTime: 0,
+                    consumingTime: taskTime,
                     weight: baseWeight + i + 1,
                     startTime: '',
-                    endTime: ''
+                    endTime: '',
+                    base_points: getBasePoints()
                 });
             }
 
@@ -7229,6 +9493,7 @@ function showAddTaskModal(project) {
                 return;
             }
 
+            const importTaskTime = parseInt(document.getElementById('importTaskTime').value) || 10;
             const newSubtasks = [];
             const baseWeight = project.subtasks.length;
             const today = new Date().toISOString().split('T')[0];
@@ -7239,10 +9504,11 @@ function showAddTaskModal(project) {
                     name: name,
                     status: -1,
                     completeTime: today,
-                    consumingTime: 0,
+                    consumingTime: importTaskTime,
                     weight: baseWeight + index + 1,
                     startTime: '',
-                    endTime: ''
+                    endTime: '',
+                    base_points: getBasePoints()
                 });
             });
 
@@ -7257,6 +9523,134 @@ function showAddTaskModal(project) {
         });
     }
 
+    // 任务预览更新函数
+    function updateTaskPreview() {
+        const count = parseInt(document.getElementById('taskCount').value) || 0;
+        const taskName = document.getElementById('taskName').value.trim() || '任务名';
+        const taskTime = parseInt(document.getElementById('taskTime').value) || 10;
+        const previewArea = document.getElementById('taskPreviewArea');
+        
+        previewArea.innerHTML = '';
+        previewArea.style.cssText = `
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-content: flex-start;
+        `;
+        
+        for (let i = 0; i < Math.min(count, 30); i++) { // 最多预览30个
+            const taskCard = document.createElement('div');
+            taskCard.style.cssText = `
+                background: #e3f2fd;
+                border: 1px solid #90caf9;
+                border-radius: 16px;
+                padding: 6px 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                color: #1976d2;
+                white-space: nowrap;
+                flex-shrink: 0;
+            `;
+            
+            taskCard.innerHTML = `
+                <span>${taskName}-${i + 1}</span>
+                <span style="color: #666; font-size: 10px;">${taskTime}min</span>
+            `;
+            
+            previewArea.appendChild(taskCard);
+        }
+        
+        if (count > 30) {
+            const moreInfo = document.createElement('div');
+            moreInfo.style.cssText = `
+                background: #f5f5f5;
+                border: 1px solid #ddd;
+                border-radius: 16px;
+                padding: 6px 12px;
+                display: inline-flex;
+                align-items: center;
+                font-size: 12px;
+                color: #666;
+                font-style: italic;
+                flex-shrink: 0;
+            `;
+            moreInfo.textContent = `+${count - 30}个任务`;
+            previewArea.appendChild(moreInfo);
+        }
+    }
+    
+    // 数量调节按钮事件
+    document.getElementById('taskCountMinus').addEventListener('click', () => {
+        const input = document.getElementById('taskCount');
+        const currentValue = parseInt(input.value) || 5;
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+            updateTaskPreview();
+        }
+    });
+    
+    document.getElementById('taskCountPlus').addEventListener('click', () => {
+        const input = document.getElementById('taskCount');
+        const currentValue = parseInt(input.value) || 5;
+        if (currentValue < 50) {
+            input.value = currentValue + 1;
+            updateTaskPreview();
+        }
+    });
+    
+    // 用时调节按钮事件
+    document.getElementById('taskTimeMinus').addEventListener('click', () => {
+        const input = document.getElementById('taskTime');
+        const currentValue = parseInt(input.value) || 10;
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+            updateTaskPreview();
+        }
+    });
+    
+    document.getElementById('taskTimePlus').addEventListener('click', () => {
+        const input = document.getElementById('taskTime');
+        const currentValue = parseInt(input.value) || 10;
+        if (currentValue < 999) {
+            input.value = currentValue + 1;
+            updateTaskPreview();
+        }
+    });
+    
+    // 批量导入用时调节按钮事件
+    document.getElementById('importTaskTimeMinus').addEventListener('click', () => {
+        const input = document.getElementById('importTaskTime');
+        const currentValue = parseInt(input.value) || 10;
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    });
+    
+    document.getElementById('importTaskTimePlus').addEventListener('click', () => {
+        const input = document.getElementById('importTaskTime');
+        const currentValue = parseInt(input.value) || 10;
+        if (currentValue < 999) {
+            input.value = currentValue + 1;
+        }
+    });
+
+    // 输入框变化事件
+    document.getElementById('taskCount').addEventListener('input', updateTaskPreview);
+    document.getElementById('taskName').addEventListener('input', updateTaskPreview);
+    document.getElementById('taskTime').addEventListener('input', updateTaskPreview);
+    
+    // 初始化预览
+    updateTaskPreview();
+
     // 绑定事件
     document.getElementById('closeAddTaskModal').addEventListener('click', closeModal);
     document.getElementById('cancelAddTask').addEventListener('click', closeModal);
@@ -7265,12 +9659,12 @@ function showAddTaskModal(project) {
     document.getElementById('importFileBtn').addEventListener('click', handleFileImport);
     document.getElementById('confirmImport').addEventListener('click', handleConfirmImport);
     
-    // 点击背景关闭
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
+    // 点击背景关闭 - 已禁用
+    // modal.addEventListener('click', (e) => {
+    //     if (e.target === modal) {
+    //         closeModal();
+    //     }
+    // });
 }
 
 // 打开项目编辑模态框
@@ -7807,20 +10201,62 @@ function addProjectModalStyles() {
     document.head.appendChild(style);
 }
 
+// 初始化系统设置弹窗
+function initSystemSettingModal() {
+    const systemSettingBtn = document.getElementById('systemsettingBtn');
+    const systemSettingModal = document.getElementById('systemSettingModal');
+    const systemModalOverlay = document.getElementById('systemModalOverlay');
+    const closeSystemSettingBtn = document.getElementById('closeSystemSettingBtn');
+    
+    if (systemSettingBtn && systemSettingModal && systemModalOverlay && closeSystemSettingBtn) {
+        // 点击Setting按钮显示弹窗
+        systemSettingBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // 初始化基础积分输入框的值
+            const basePointsInput = document.getElementById('basePointsInput');
+            if (basePointsInput) {
+                basePointsInput.value = getBasePoints();
+            }
+            systemSettingModal.style.display = 'block';
+            systemModalOverlay.style.display = 'block';
+        });
+        
+        // 点击关闭按钮隐藏弹窗
+        closeSystemSettingBtn.addEventListener('click', function() {
+            systemSettingModal.style.display = 'none';
+            systemModalOverlay.style.display = 'none';
+        });
+        
+        // 点击遮罩层隐藏弹窗
+        systemModalOverlay.addEventListener('click', function() {
+            systemSettingModal.style.display = 'none';
+            systemModalOverlay.style.display = 'none';
+        });
+        
+        // ESC键隐藏弹窗
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && systemSettingModal.style.display === 'block') {
+                systemSettingModal.style.display = 'none';
+                systemModalOverlay.style.display = 'none';
+            }
+        });
+    }
+}
+
 // 在页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     try {
         // 初始化节假日数据
         initSettingsData();
         
-        // 初始化导航菜单
-        initNavigationMenu();
-        
         // 初始化项目管理面板
         initProjectPanel();
         
         // 初始化设置弹窗
         initSettingsModal();
+        
+        // 初始化系统设置弹窗
+        initSystemSettingModal();
         
         // 初始化日期选择器
         initDatePicker();
@@ -8407,14 +10843,6 @@ function removeTaskFromPlan(taskName, projectName) {
 
 // 绑定备份按钮事件
 document.addEventListener('DOMContentLoaded', function() {
-    const backupBtn = document.getElementById('backupBtn');
-    if (backupBtn) {
-        backupBtn.addEventListener('click', function() {
-            // 页面头部的备份按钮总是使用手动下载模式
-            manualDownloadBackup();
-        });
-    }
-    
     // 绑定手动备份按钮事件
     const manualBackupBtn = document.getElementById('manualBackupBtn');
     if (manualBackupBtn) {
@@ -8481,6 +10909,64 @@ document.addEventListener('DOMContentLoaded', function() {
                         updateStorageUsageDisplay();
                     }, 100);
                 }
+                
+                // 如果切换到基本设置标签页，初始化字体大小设置
+                if (tabName === 'basic') {
+                    setTimeout(() => {
+                        initFontSizeSettings();
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    // 绑定系统设置弹窗标签页切换事件
+    const systemTabBtns = document.querySelectorAll('.system-tab-btn');
+    const systemTabContents = document.querySelectorAll('.system-tab-content');
+    
+    systemTabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            
+            // 更新按钮状态
+            systemTabBtns.forEach(b => {
+                b.classList.remove('active');
+                b.style.color = '#666';
+                b.style.fontWeight = 'normal';
+            });
+            this.classList.add('active');
+            this.style.color = '#50b767';
+            this.style.fontWeight = 'bold';
+            
+            // 更新内容显示
+            systemTabContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            const targetContent = document.getElementById('system' + tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Content');
+            if (targetContent) {
+                targetContent.style.display = 'block';
+                
+                // 如果切换到自动备份设置标签页，初始化设置界面
+                if (tabName === 'autoBackup') {
+                    setTimeout(() => {
+                        initAutoBackupSettings();
+                    }, 100);
+                }
+                
+                // 如果切换到数据备份标签页，更新存储使用量显示
+                if (tabName === 'backup') {
+                    setTimeout(() => {
+                        updateStorageUsageDisplay();
+                    }, 100);
+                }
+                
+                // 如果切换到基本设置标签页，初始化字体大小设置
+                if (tabName === 'basic') {
+                    setTimeout(() => {
+                        initFontSizeSettings();
+                    }, 100);
+                }
             }
         });
     });
@@ -8520,7 +11006,7 @@ function restoreDataFromFile(file) {
                 return;
             }
             
-            // 恢复数据
+            // 恢复原有数据
             if (backupData.data.projects) {
                 localStorage.setItem(CONFIG.STORAGE_KEYS.PROJECTS, JSON.stringify(backupData.data.projects));
             }
@@ -8529,6 +11015,12 @@ function restoreDataFromFile(file) {
             }
             if (backupData.data.calendarSettings) {
                 localStorage.setItem(CONFIG.STORAGE_KEYS.CALENDAR_SETTINGS, JSON.stringify(backupData.data.calendarSettings));
+            }
+            if (backupData.data.users) {
+                localStorage.setItem(CONFIG.STORAGE_KEYS.USERS, JSON.stringify(backupData.data.users));
+            }
+            if (backupData.data.familyRelations) {
+                localStorage.setItem(CONFIG.STORAGE_KEYS.FAMILY_RELATIONS, JSON.stringify(backupData.data.familyRelations));
             }
             if (backupData.data.showTime !== undefined) {
                 localStorage.setItem(CONFIG.STORAGE_KEYS.SHOW_TIME, backupData.data.showTime);
@@ -8541,6 +11033,62 @@ function restoreDataFromFile(file) {
             }
             if (backupData.data.navMenuActiveIndex !== undefined) {
                 localStorage.setItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX, backupData.data.navMenuActiveIndex);
+            }
+            
+            // 恢复新增数据
+            if (backupData.data.microGoals) {
+                localStorage.setItem('gms_micro_goals', JSON.stringify(backupData.data.microGoals));
+            }
+            if (backupData.data.basePoints !== undefined) {
+                localStorage.setItem('gms_base_points', backupData.data.basePoints);
+            }
+            if (backupData.data.currentUser !== undefined) {
+                localStorage.setItem('gms_current_user', JSON.stringify(backupData.data.currentUser));
+            }
+            if (backupData.data.dimensionValues) {
+                localStorage.setItem('gms_dimension_values', JSON.stringify(backupData.data.dimensionValues));
+            }
+            if (backupData.data.processDimensions) {
+                localStorage.setItem('gms_process_dimensions', JSON.stringify(backupData.data.processDimensions));
+            }
+            if (backupData.data.milestones) {
+                localStorage.setItem('gms_milestones', JSON.stringify(backupData.data.milestones));
+            }
+            if (backupData.data.goalProjectLinks) {
+                localStorage.setItem('gms_goal_project_links', JSON.stringify(backupData.data.goalProjectLinks));
+            }
+            if (backupData.data.goalTaskLinks) {
+                localStorage.setItem('gms_goal_task_links', JSON.stringify(backupData.data.goalTaskLinks));
+            }
+            if (backupData.data.objectiveRecords) {
+                localStorage.setItem('objective_records', JSON.stringify(backupData.data.objectiveRecords));
+            }
+            if (backupData.data.userPaths) {
+                localStorage.setItem('gms_user_paths', JSON.stringify(backupData.data.userPaths));
+            }
+            if (backupData.data.pathDimensions) {
+                localStorage.setItem('gms_path_dimensions', JSON.stringify(backupData.data.pathDimensions));
+            }
+            if (backupData.data.pathGoals) {
+                localStorage.setItem('gms_path_goals', JSON.stringify(backupData.data.pathGoals));
+            }
+            if (backupData.data.milestoneDimensionRelations) {
+                localStorage.setItem('gms_milestone_dimension_relations', JSON.stringify(backupData.data.milestoneDimensionRelations));
+            }
+            if (backupData.data.products) {
+                localStorage.setItem('gms_products', JSON.stringify(backupData.data.products));
+            }
+            if (backupData.data.redeemHistory) {
+                localStorage.setItem('redeemHistory', JSON.stringify(backupData.data.redeemHistory));
+            }
+            if (backupData.data.goalCustomTags) {
+                localStorage.setItem('goalCustomTags', JSON.stringify(backupData.data.goalCustomTags));
+            }
+            if (backupData.data.dimensionSelection) {
+                localStorage.setItem('gms_dimension_selection', JSON.stringify(backupData.data.dimensionSelection));
+            }
+            if (backupData.data.backupConfig) {
+                localStorage.setItem('gms_backup_config', JSON.stringify(backupData.data.backupConfig));
             }
             
             // 显示成功消息
@@ -8590,6 +11138,17 @@ function toggleTaskPicker() {
         if (greenPreviewBox) {
             greenPreviewBox.classList.remove('active');
         }
+        
+        // 清空选中任务和预览区
+        taskPickerSelectedTasks = [];
+        updatePreviewDisplay();
+        
+        // 清除所有任务卡的选择状态
+        document.querySelectorAll('.task-card-compact.selected').forEach(card => {
+            if (!card.classList.contains('completed-task')) {
+                card.classList.remove('selected');
+            }
+        });
     } else {
         // 切换到任务选择器模式
         monthPanel.classList.add('hidden');
@@ -8707,7 +11266,53 @@ function renderTaskPicker() {
         });
     }
     
+    // 对项目进行排序：所有任务已完成的项目排到最后
+    filteredProjects.sort((a, b) => {
+        const aCompleted = a.subtasks.filter(task => task.status === 1).length;
+        const aTotal = a.subtasks.length;
+        const bCompleted = b.subtasks.filter(task => task.status === 1).length;
+        const bTotal = b.subtasks.length;
+        
+        const aAllCompleted = aCompleted === aTotal && aTotal > 0;
+        const bAllCompleted = bCompleted === bTotal && bTotal > 0;
+        
+        // 如果一个全部完成，另一个没有全部完成，全部完成的排后面
+        if (aAllCompleted && !bAllCompleted) return 1;
+        if (!aAllCompleted && bAllCompleted) return -1;
+        
+        // 其他情况保持原有顺序
+        return 0;
+    });
+    
     container.innerHTML = '';
+    
+    // 添加空白项目卡（在第一个项目卡上方）
+    const blankProjectCard = document.createElement('div');
+    blankProjectCard.className = 'project-card-compact';
+    blankProjectCard.style.display = 'flex';
+    blankProjectCard.style.alignItems = 'center';
+    blankProjectCard.style.gap = '10px';
+    
+    blankProjectCard.innerHTML = `
+        <div class="project-card-content" style="flex: 1;">
+            <span class="project-sequence-number">序列</span>
+            <span class="project-title-c">项目名称</span>
+        </div>
+        <!-- 右侧圆圈容器 -->
+        <div class="weekday-circles-container">
+            <div class="weekday-circles-row">
+                <div class="weekday-circle workday">一</div>
+                <div class="weekday-circle workday">二</div>
+                <div class="weekday-circle workday">三</div>
+                <div class="weekday-circle workday">四</div>
+                <div class="weekday-circle workday">五</div>
+                <div class="weekday-circle weekend">六</div>
+                <div class="weekday-circle weekend">日</div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(blankProjectCard);
     
     filteredProjects.forEach((project, index) => {
         if (!project || !project.subtasks || !Array.isArray(project.subtasks)) return;
@@ -8715,6 +11320,9 @@ function renderTaskPicker() {
         // 创建项目卡片
         const projectCard = document.createElement('div');
         projectCard.className = 'project-card-compact';
+        projectCard.style.display = 'flex';
+        projectCard.style.alignItems = 'center';
+        projectCard.style.gap = '10px';
         
         // 计算已完成任务数
         const completedTasks = project.subtasks.filter(task => task.status === 1).length;
@@ -8731,7 +11339,7 @@ function renderTaskPicker() {
             return false;
         });
         
-        // 检查近10天内是否有已完成任务（用于判断是否显示🐢图标）
+        // 检查近10天内是否有已完成任务
         const tenDaysAgo = new Date();
         tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
         const hasRecentCompletedTasks = project.subtasks.some(task => {
@@ -8767,12 +11375,62 @@ function renderTaskPicker() {
             }
         }
         
+        // 检查近一周的已完成任务
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        // 统计每个星期几的完成情况
+        const weeklyCompletion = [false, false, false, false, false, false, false]; // 周一到周日
+        
+        project.subtasks.forEach(task => {
+            if (task.status === 1 && task.completeTime) {
+                const completeDate = new Date(task.completeTime);
+                if (completeDate >= oneWeekAgo) {
+                    const dayOfWeek = completeDate.getDay(); // 0=周日, 1=周一, ..., 6=周六
+                    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 转换为0=周一, ..., 6=周日
+                    weeklyCompletion[adjustedDay] = true;
+                }
+            }
+        });
+        
+        // 生成圆圈HTML
+        const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+        let circlesHTML = '';
+        
+        // 检查项目完成状态并显示相应图标
+        const allTasksCompleted = completedTasks === totalTasks && totalTasks > 0;
+        
+        if (allTasksCompleted) {
+            // 所有任务已完成，显示完成图标
+            circlesHTML += `<div style="display: inline-flex; align-items: center; margin-right: 5px;" title="所有任务已完成"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path stroke="none" d="M0 0h24v24H0z" /><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /><path d="M4.012 16.737a2 2 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /><path d="M11 14l2 2l4 -4" /></svg></div>`;
+        } else if (!hasRecentCompletedTasks) {
+            // 近10天内没有已完成任务，显示警告图标
+            circlesHTML += `<div style="display: inline-flex; align-items: center; margin-right: 5px;" title="近10天没有完成任务"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg></div>`;
+        }
+        
+        // 添加星期圆圈
+        circlesHTML += weekdays.map((day, index) => {
+            const isCompleted = weeklyCompletion[index];
+            const isWeekend = index >= 5; // 周六日
+            
+            if (isCompleted) {
+                const className = isWeekend ? 'completed-weekend' : 'completed-workday';
+                return `<div class="weekday-circle ${className}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+            } else {
+                return `<div class="weekday-circle gray-dashed">${day}</div>`;
+            }
+        }).join('');
+        
         projectCard.innerHTML = `
-            <div class="project-card-content">
+            <div class="project-card-content" style="flex: 1;">
                 <span class="project-sequence-number">${index + 1}</span>
-                <span class="project-name">${project.name}</span>
-                <span class="task-stats">(${progressIcon}已完成：${completedTasks} / ${totalTasks})</span>
-                ${latestCompleteDate ? `<span class="latest-complete-date">（更新于：${latestCompleteDate}）</span>` : ''}
+                <span class="project-title-c">${project.name}</span>
+            </div>
+            <!-- 右侧圆圈容器 -->
+            <div class="weekday-circles-container">
+                <div class="weekday-circles-row">
+                    ${circlesHTML}
+                </div>
             </div>
         `;
         
@@ -8826,6 +11484,11 @@ function renderTaskPicker() {
                 // status为0、-1或空值的任务使用虚线边框
                 taskCard.className = 'task-card-compact pending-task';
                 taskCard.textContent = subtask.name;
+                
+                // 检查是否处于计划中状态，如果是则添加绿色圆点指示器
+                if (subtask.status === 0 && subtask.completeTime) {
+                    addPlannedIndicator(taskCard);
+                }
                 
                 // 绑定任务卡片点击事件
                 taskCard.addEventListener('click', () => toggleTaskSelection(project.name, subtask));
@@ -9022,6 +11685,9 @@ function updatePreviewDisplay() {
     } else {
         actionButtons.classList.remove('show');
     }
+    
+    // 确保按钮事件在每次更新后都正确绑定
+    bindPreviewActionButtons();
 }
 
 // 绑定预览区操作按钮事件
@@ -9030,10 +11696,14 @@ function bindPreviewActionButtons() {
     const cancelBtn = document.getElementById('cancelAllBtn');
     
     if (confirmBtn) {
+        // 移除之前的事件监听器，避免重复绑定
+        confirmBtn.removeEventListener('click', confirmAllTasks);
         confirmBtn.addEventListener('click', confirmAllTasks);
     }
     
     if (cancelBtn) {
+        // 移除之前的事件监听器，避免重复绑定
+        cancelBtn.removeEventListener('click', cancelAllTasks);
         cancelBtn.addEventListener('click', cancelAllTasks);
     }
 }
@@ -9081,11 +11751,66 @@ function confirmAllTasks() {
         renderDayView(currentDate, dayPanel);
     }
     
+    // 更新任务选择器中的任务卡状态
+    updateTaskPickerTaskStatus();
+    
     // 清空选中任务
     taskPickerSelectedTasks = [];
     
-    // 退出任务选择器
-    toggleTaskPicker();
+    // 更新预览区显示
+    updatePreviewDisplay();
+    
+    // 不退出任务选择器，允许用户继续选择任务
+    // toggleTaskPicker();
+}
+
+// 更新任务选择器中的任务卡状态
+function updateTaskPickerTaskStatus() {
+    // 清除所有任务卡的选择状态
+    document.querySelectorAll('.task-card-compact.selected').forEach(card => {
+        if (!card.classList.contains('completed-task')) {
+            card.classList.remove('selected');
+            
+            // 添加绿色圆点指示器表示计划中状态
+            const projectName = card.dataset.projectName;
+            const taskName = card.dataset.taskName;
+            
+            // 检查任务是否处于计划中状态
+            const projects = getProjects();
+            const project = projects.find(p => p.name === projectName);
+            if (project) {
+                const subtask = project.subtasks.find(s => s.name === taskName);
+                if (subtask && subtask.status === 0 && subtask.completeTime) {
+                    // 添加绿色圆点指示器
+                    addPlannedIndicator(card);
+                }
+            }
+        }
+    });
+}
+
+// 添加计划中状态指示器
+function addPlannedIndicator(taskCard) {
+    // 检查是否已经存在指示器
+    if (taskCard.querySelector('.planned-indicator')) {
+        return;
+    }
+    
+    const indicator = document.createElement('div');
+    indicator.className = 'planned-indicator';
+    indicator.innerHTML = '●';
+    indicator.style.cssText = `
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        color: #28a745;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 10;
+    `;
+    
+    taskCard.style.position = 'relative';
+    taskCard.appendChild(indicator);
 }
 
 // 取消所有任务
@@ -9102,6 +11827,8 @@ function cancelAllTasks() {
     
     // 更新预览区显示
     updatePreviewDisplay();
+    
+    // 不退出任务选择器，允许用户继续选择任务
 }
 
 // 渲染任务选择器分类标签
@@ -9374,6 +12101,23 @@ function bindTaskPickerEvents() {
             alert('批量排期功能待开发');
         }
         
+        // 批量修改积分
+        function batchEditPoints() {
+            const points = prompt('请输入积分值（1-100）：');
+            if (!points || isNaN(points)) {
+                alert('请输入有效的积分数值');
+                return;
+            }
+            
+            const pointsValue = parseInt(points);
+            if (pointsValue < 1 || pointsValue > 100) {
+                alert('积分值必须在1-100之间');
+                return;
+            }
+            
+            batchUpdateSubtasks('editPoints', pointsValue);
+        }
+        
         // 批量开始时间
         function batchEditStartTime() {
             const time = prompt('请输入开始时间（格式：HH:MM）：');
@@ -9474,7 +12218,7 @@ function bindTaskPickerEvents() {
                     // 设置完成日期（按顺序递增）
                     const dateToSet = new Date(currentDate);
                     dateToSet.setDate(currentDate.getDate() + index);
-                    subtask.completeTime = dateToSet.toISOString().split('T')[0] + 'T00:00:00.000Z';
+                    subtask.completeTime = dateToSet.toISOString().split('T')[0];
                     
                     // 设置状态为计划中
                     subtask.status = 0;
@@ -9616,7 +12360,7 @@ function bindTaskPickerEvents() {
                 const subtask = project.subtasks.find(s => s.uniqueId === taskId);
                 if (subtask && availableDates[index]) {
                     const dateToSet = availableDates[index];
-                    subtask.completeTime = dateToSet.toISOString().split('T')[0] + 'T00:00:00.000Z';
+                    subtask.completeTime = dateToSet.toISOString().split('T')[0];
                     
                     // 设置状态为计划中
                     subtask.status = 0;
@@ -9778,6 +12522,7 @@ function bindTaskPickerEvents() {
             
             const project = projects[projectIndex];
             let updateCount = 0;
+            let totalPointsEarned = 0;
             
             project.subtasks.forEach((subtask, index) => {
                 if (selectedSubtasks.has(subtask.uniqueId)) {
@@ -9789,8 +12534,15 @@ function bindTaskPickerEvents() {
                             subtask.startTime = value;
                             break;
                         case 'complete':
-                            subtask.status = 1;
-                            subtask.completeTime = value + 'T00:00:00.000Z';
+                            // 只有未完成的任务才能被标记为完成并获得积分
+                            if (subtask.status !== 1) {
+                                subtask.status = 1;
+                                subtask.completeTime = value;
+                                
+                                // 获取任务积分并累加
+                                const taskPoints = subtask.base_points || 5;
+                                totalPointsEarned += taskPoints;
+                            }
                             break;
                         case 'noPlan':
                             subtask.status = -1;
@@ -9800,7 +12552,10 @@ function bindTaskPickerEvents() {
                             subtask.name = `${value}-${taskIndex}`;
                             break;
                         case 'unifyDate':
-                            subtask.completeTime = value + 'T00:00:00.000Z';
+                            subtask.completeTime = value;
+                            break;
+                        case 'editPoints':
+                            subtask.base_points = value;
                             break;
                     }
                     updateCount++;
@@ -9811,6 +12566,18 @@ function bindTaskPickerEvents() {
             projects[projectIndex] = project;
             saveProjects(projects);
             
+            // 如果是批量完成操作且有积分获得，更新用户积分
+            if (action === 'complete' && totalPointsEarned > 0) {
+                // 增加用户积分
+                window.userManager.updateUserPoints(totalPointsEarned);
+                
+                // 播放音效
+                playSound('complete');
+                
+                // 显示积分特效
+                showPointsEffect(totalPointsEarned);
+            }
+            
             // 清空选中状态
             selectedSubtasks.clear();
             
@@ -9820,7 +12587,11 @@ function bindTaskPickerEvents() {
             // 重新渲染列表
             renderProjectPanelSubtaskList(project);
             
-            alert(`成功更新 ${updateCount} 个任务`);
+            if (action === 'complete' && totalPointsEarned > 0) {
+                alert(`成功完成 ${updateCount} 个任务，获得 ${totalPointsEarned} 积分！`);
+            } else {
+                alert(`成功更新 ${updateCount} 个任务`);
+            }
         }
         
         // 初始化批量操作事件监听器
@@ -9859,6 +12630,9 @@ function bindTaskPickerEvents() {
                             break;
                         case 'schedule':
                             batchEditSchedule();
+                            break;
+                        case 'editPoints':
+                            batchEditPoints();
                             break;
                         case 'startTime':
                             batchEditStartTime();
@@ -10485,11 +13259,18 @@ function bindTaskPickerEvents() {
             monthlyTaskList.innerHTML = entries.map(([monthKey, stats]) => {
                 const percentage = maxTime > 0 ? (stats.totalTime / maxTime) * 100 : 0;
                 
+                // 计算平均用时（总用时除以当月天数）
+                const currentYear = new Date().getFullYear();
+                const monthIndex = parseInt(monthKey) - 1; // monthKey是1-12，需要转换为0-11
+                const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+                const averageTime = stats.totalTime > 0 ? Math.round(stats.totalTime / daysInMonth) : 0;
+                
                 return `
-                    <div class="task-time-item">
+                    <div class="task-time-item monthly-item" data-month="${monthKey}" style="cursor: pointer;">
                         <div class="task-time-item-month">${stats.monthName}</div>
                         <div class="task-time-item-count">${stats.completedCount}</div>
                         <div class="task-time-item-duration">${formatTime(stats.totalTime)}</div>
+                        <div class="task-time-item-average">${formatTime(averageTime)}</div>
                         <div class="task-time-item-progress">
                             <div class="task-time-progress-bar">
                                 <div class="task-time-progress-fill" style="width: ${percentage}%;"></div>
@@ -10498,6 +13279,96 @@ function bindTaskPickerEvents() {
                     </div>
                 `;
             }).join('');
+            
+            // 为月份行添加点击事件监听器
+            const monthlyItems = monthlyTaskList.querySelectorAll('.monthly-item');
+            monthlyItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const selectedMonth = parseInt(this.dataset.month);
+                    switchToMonthlyDailyView(selectedMonth);
+                });
+                
+                // 添加鼠标悬停效果
+                item.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+        }
+        
+        // 切换到指定月份的按日视图
+        function switchToMonthlyDailyView(selectedMonth) {
+            // 切换到按日模式
+            currentTaskView = 'daily';
+            
+            // 更新按钮状态
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-view="daily"]').classList.add('active');
+            
+            // 切换视图显示
+            const dailyView = document.getElementById('dailyTaskView');
+            const monthlyView = document.getElementById('monthlyTaskView');
+            
+            dailyView.style.display = 'block';
+            monthlyView.style.display = 'none';
+            
+            // 更新日任务统计，只显示选中月份的数据
+            updateDailyTaskStatsForMonth(selectedMonth);
+        }
+        
+        // 更新指定月份的日任务统计
+        function updateDailyTaskStatsForMonth(selectedMonth) {
+            const projects = getProjects();
+            if (!projects || !Array.isArray(projects)) {
+                return;
+            }
+            
+            const currentYear = new Date().getFullYear();
+            const daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
+            
+            const dailyStats = {};
+            
+            // 初始化选中月份所有日期的统计数据
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                dailyStats[dateStr] = {
+                    completedCount: 0,
+                    totalTime: 0
+                };
+            }
+            
+            // 统计各项目的已完成任务
+            projects.forEach(project => {
+                if (project && project.subtasks && Array.isArray(project.subtasks)) {
+                    project.subtasks.forEach(subtask => {
+                        if (subtask && subtask.status === 1 && subtask.completeTime) {
+                            const taskDate = new Date(subtask.completeTime);
+                            const taskMonth = taskDate.getMonth();
+                            const taskYear = taskDate.getFullYear();
+                            
+                            // 只统计选中月份的任务
+                            if (taskMonth === selectedMonth && taskYear === currentYear) {
+                                const dateStr = formatDate(taskDate);
+                                if (dailyStats[dateStr]) {
+                                    dailyStats[dateStr].completedCount++;
+                                    dailyStats[dateStr].totalTime += subtask.consumingTime || 0;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            
+            // 应用排序
+            const sortedDailyStats = sortTaskData(dailyStats, currentSortField, currentSortDirection);
+            
+            // 渲染日任务列表
+            renderDailyTaskList(sortedDailyStats);
         }
 
         // 切换视图
@@ -10611,11 +13482,199 @@ function bindTaskPickerEvents() {
             return Object.fromEntries(entries);
         }
 
+        // 初始化Header导航
+        function initHeaderNavigation() {
+            const headerNavItems = document.querySelectorAll('.main-nav .nav-item');
+            const panels = document.querySelectorAll('.content-panel');
+            
+            // 页面映射关系
+            const pageMapping = {
+                'home': 'home-panel',
+                'process': 'process-panel', 
+                'project': 'project-panel',
+                'plan': 'plan-panel',
+                'learning-resources': 'learning-resources-panel',
+                'process-management': 'process-management-panel'
+            };
+            
+            // 恢复保存的激活状态
+            const savedActiveIndex = localStorage.getItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX);
+            let activeIndex = 0; // 默认激活首页
+            
+            if (savedActiveIndex !== null && !isNaN(savedActiveIndex)) {
+                const index = parseInt(savedActiveIndex);
+                if (index >= 0 && index < headerNavItems.length) {
+                    activeIndex = index;
+                }
+            }
+            
+            // 设置初始激活状态
+            headerNavItems.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+            
+            // 根据激活的导航项找到对应的面板
+            const activeNavItem = headerNavItems[activeIndex];
+            const activePageId = activeNavItem ? activeNavItem.getAttribute('data-page') : 'home';
+            const activePanelId = pageMapping[activePageId];
+            
+            panels.forEach(panel => {
+                panel.classList.toggle('active', panel.id === activePanelId);
+            });
+            
+            // 如果初始激活的是项目管理页面，初始化项目管理面板
+            if (activeIndex === 2) { // 项目管理是第3个（索引为2）
+                initProjectPanel();
+            }
+            
+            // 为header导航项添加点击事件
+            headerNavItems.forEach((headerItem, index) => {
+                headerItem.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetPage = this.getAttribute('data-page');
+                    const targetPanelId = pageMapping[targetPage];
+                    
+                    // 更新header导航状态
+                    headerNavItems.forEach(item => item.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 切换内容面板
+                    panels.forEach(panel => panel.classList.remove('active'));
+                    const targetPanel = document.getElementById(targetPanelId);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                    
+                    // 保存当前激活状态到localStorage
+                    localStorage.setItem(CONFIG.STORAGE_KEYS.NAV_MENU_ACTIVE_INDEX, index.toString());
+                    
+                    // 触发相应的初始化函数
+                    if (targetPage === 'project') {
+                        initProjectPanel();
+                    } else if (targetPage === 'home') {
+                        updateStatsCards();
+                    }
+                    
+                    // 触发自动备份
+                    triggerAutoBackup();
+                    updateStorageUsageDisplay();
+                });
+            });
+        }
+
+        // 清理ISO格式的completeTime数据
+        function cleanupCompleteTimeFormat() {
+            const projects = getProjects();
+            let hasChanges = false;
+            
+            projects.forEach(project => {
+                if (project.subtasks && Array.isArray(project.subtasks)) {
+                    project.subtasks.forEach(subtask => {
+                        if (subtask.completeTime && typeof subtask.completeTime === 'string') {
+                            // 检查是否是ISO格式（包含T和Z）
+                            if (subtask.completeTime.includes('T') && subtask.completeTime.includes('Z')) {
+                                // 转换为简单的YYYY-MM-DD格式
+                                subtask.completeTime = subtask.completeTime.split('T')[0];
+                                hasChanges = true;
+                            }
+                        }
+                    });
+                }
+            });
+            
+            if (hasChanges) {
+                saveProjects(projects);
+                console.log('已清理ISO格式的completeTime数据，转换为YYYY-MM-DD格式');
+            }
+        }
+
+        // 初始化测试用户数据
+        function initTestUsers() {
+            const users = getUsers();
+            
+            // 如果没有用户数据，创建测试用户
+            if (users.length === 0) {
+                const testUsers = [
+                    {
+                        user_id: 'user_admin_001',
+                        username: 'admin',
+                        password_hash: 'e3afed0047b08059d0fada10f400c1e5', // MD5 hash of '123456'
+                        role: 'admin',
+                        parent_id: null,
+                        total_points: 0,
+                        created_at: new Date().toISOString(),
+                        // 新增Process相关字段
+                        birth_date: null, // 管理员无需出生日期
+                        current_grade_value_id: null, // 管理员无需年级
+                        active_path_id: null // 管理员无需成长路径
+                    },
+                    {
+                        user_id: 'user_test_parent_001',
+                        username: 'parent1',
+                        password_hash: 'e3afed0047b08059d0fada10f400c1e5', // MD5 hash of '123456'
+                        role: 'parent',
+                        parent_id: null,
+                        total_points: 0,
+                        created_at: new Date().toISOString(),
+                        // 新增Process相关字段
+                        birth_date: null, // 家长无需出生日期
+                        current_grade_value_id: null, // 家长无需年级
+                        active_path_id: null // 家长无需成长路径
+                    },
+                    {
+                        user_id: 'user_test_child_001',
+                        username: 'child1',
+                        password_hash: 'e3afed0047b08059d0fada10f400c1e5', // MD5 hash of '123456'
+                        role: 'child',
+                        parent_id: 'user_test_parent_001',
+                        total_points: 100,
+                        created_at: new Date().toISOString(),
+                        // 新增Process相关字段
+                        birth_date: "2018-03-12", // 出生日期 YYYY-MM-DD
+                        current_grade_value_id: 202, // 关联年级维度值ID
+                        active_path_id: "path_789" // 当前活跃路径ID
+                    }
+                ];
+                
+                saveUsers(testUsers);
+                
+                // 创建家庭关系
+                const familyRelations = [
+                    {
+                        family_id: 'family_test_001',
+                        parent_id: 'user_test_parent_001',
+                        child_id: 'user_test_child_001',
+                        points_pool: 500,
+                        permissions: {
+                            canViewTasks: true,
+                            canEditTasks: false,
+                            canDeleteTasks: false
+                        }
+                    }
+                ];
+                
+                saveFamilyRelations(familyRelations);
+                
+                console.log('已初始化测试用户数据：');
+                console.log('管理员账号: admin / 123456');
+                console.log('家长账号: parent1 / 123456');
+                console.log('孩子账号: child1 / 123456');
+            }
+        }
+
         // 页面加载时初始化批量操作和统计卡片
         document.addEventListener('DOMContentLoaded', function() {
+            // 首先清理数据格式
+            cleanupCompleteTimeFormat();
+            
+            // 初始化测试用户数据
+            initTestUsers();
+            
             initBatchOperations();
             updateStatsCards();
             initSorting(); // 初始化排序功能
+            initHeaderNavigation(); // 初始化Header导航
             
             // 绑定加载更多按钮事件
             const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -10630,4 +13689,3505 @@ function bindTaskPickerEvents() {
                     switchTaskView(view);
                 });
             });
+            
+            // 初始化目标管理功能
+            initGoalManagement();
         });
+
+// ==================== 目标管理功能 ====================
+
+// 目标管理相关变量
+let goalPanelSelectedCategory = null;
+let goalPanelSearchTerm = '';
+let selectedGoalId = null;
+
+// 初始化目标管理
+function initGoalManagement() {
+    // 调试：页面加载时输出数据
+    console.log('=== 页面加载调试信息 ===');
+    const allGoals = getGoals();
+    const allProjects = getProjects();
+    console.log('所有目标数据:', allGoals);
+    console.log('所有项目数据:', allProjects);
+    console.log('localStorage gms_micro_goals:', localStorage.getItem('gms_micro_goals'));
+    console.log('localStorage projects:', localStorage.getItem('projects'));
+    console.log('localStorage goals:', localStorage.getItem('goals'));
+    
+    // 初始化目标搜索功能
+    initGoalSearch();
+    
+    // 初始化添加目标按钮
+    initAddGoalButton();
+    
+    // 渲染目标列表
+    renderGoalPanelList();
+    
+    // 渲染分类标签
+    renderGoalCategoryTags();
+    
+    // 创建测试关联数据
+    console.log('准备自动创建测试关联数据...');
+    setTimeout(() => {
+        console.log('开始自动创建测试关联数据...');
+        try {
+            createTestAssociations();
+            console.log('测试关联数据创建成功！');
+        } catch (error) {
+            console.error('创建测试关联数据时出错:', error);
+        }
+    }, 0);
+}
+
+// 创建测试关联数据
+function createTestAssociations() {
+    console.log('开始创建测试关联数据...');
+    
+    const goals = getGoals();
+    const projects = getProjects();
+    
+    if (goals.length === 0 || projects.length === 0) {
+        console.log('没有足够的数据创建关联');
+        return;
+    }
+    
+    // 取前3个目标和前5个项目进行关联
+    const testGoals = goals.slice(0, 3);
+    const testProjects = projects.slice(0, 5);
+    
+    console.log('准备关联的目标:', testGoals.map(g => g.title));
+    console.log('准备关联的项目:', testProjects.map(p => p.name));
+    
+    // 为项目添加linked_goals字段
+    testProjects.forEach((project, index) => {
+        const goalIndex = index % testGoals.length;
+        const goalId = testGoals[goalIndex].goal_id;
+        
+        // 添加linked_goals字段
+        if (!project.linked_goals) {
+            project.linked_goals = [];
+        }
+        if (!project.linked_goals.includes(goalId)) {
+            project.linked_goals.push(goalId);
+        }
+        
+        console.log(`项目 "${project.name}" 关联到目标 "${testGoals[goalIndex].title}"`);
+        
+        // 为项目中的一些任务添加linked_goal字段
+        if (project.subtasks && project.subtasks.length > 0) {
+            const tasksToLink = project.subtasks.slice(0, Math.min(3, project.subtasks.length));
+            tasksToLink.forEach(task => {
+                task.linked_goal = goalId;
+                console.log(`  任务 "${task.name}" 关联到目标 "${testGoals[goalIndex].title}"`);
+            });
+        }
+    });
+    
+    // 为目标添加associatedTasks字段
+    testGoals.forEach(goal => {
+        if (!goal.associatedTasks) {
+            goal.associatedTasks = [];
+        }
+        
+        // 查找关联的任务
+        testProjects.forEach(project => {
+            if (project.linked_goals && project.linked_goals.includes(goal.goal_id)) {
+                if (project.subtasks) {
+                    project.subtasks.forEach(task => {
+                        if (task.linked_goal === goal.goal_id) {
+                            const association = {
+                                projectId: project.id,
+                                taskId: task.uniqueId
+                            };
+                            
+                            // 检查是否已存在
+                            const exists = goal.associatedTasks.some(a => 
+                                a.projectId === association.projectId && a.taskId === association.taskId
+                            );
+                            
+                            if (!exists) {
+                                goal.associatedTasks.push(association);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        
+        console.log(`目标 "${goal.title}" 关联了 ${goal.associatedTasks.length} 个任务`);
+    });
+    
+    // 保存更新后的数据
+    saveGoals(goals);
+    saveProjects(projects);
+    
+    console.log('测试关联数据创建完成！');
+    console.log('更新后的目标数据:', goals.slice(0, 3));
+    console.log('更新后的项目数据:', projects.slice(0, 5));
+    
+    // 重新渲染目标列表
+    renderGoalPanelList();
+}
+
+// 获取目标数据（使用微观目标数据表）
+function getGoals() {
+    return JSON.parse(localStorage.getItem('gms_micro_goals') || '[]');
+}
+
+// 保存目标数据（使用微观目标数据表）
+function saveGoals(goals) {
+    localStorage.setItem('gms_micro_goals', JSON.stringify(goals));
+}
+
+// 渲染目标管理面板的目标列表
+function renderGoalPanelList() {
+    const goalList = document.getElementById('goalPanelList');
+    if (!goalList) return;
+    
+    const goals = getGoals();
+    let filteredGoals = [...goals];
+    
+    // 按标签筛选
+    if (goalPanelSelectedCategory) {
+        filteredGoals = filteredGoals.filter(g => {
+            if (g.tags && Array.isArray(g.tags)) {
+                return g.tags.includes(goalPanelSelectedCategory);
+            }
+            // 兼容旧的category字段
+            return g.category === goalPanelSelectedCategory;
+        });
+    }
+    
+    // 按搜索词筛选
+    if (goalPanelSearchTerm) {
+        filteredGoals = filteredGoals.filter(g => 
+            g.title.toLowerCase().includes(goalPanelSearchTerm.toLowerCase()) ||
+            (g.description && g.description.toLowerCase().includes(goalPanelSearchTerm.toLowerCase()))
+        );
+    }
+    
+    // 保留弹力区域，只清除目标内容
+    let bounceArea = goalList.querySelector('.bounce-area');
+    goalList.innerHTML = '';
+    
+    // 如果没有弹力区域，则创建一个
+    if (!bounceArea) {
+        bounceArea = document.createElement('div');
+        bounceArea.className = 'bounce-area';
+        bounceArea.innerHTML = `
+            <div class="bounce-message">
+                <span class="bounce-icon">🎯</span>
+                <span>已经到顶啦！</span>
+            </div>
+        `;
+    }
+    goalList.appendChild(bounceArea);
+    
+    if (filteredGoals.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'empty-message';
+        emptyMessage.innerHTML = `
+            <div style="text-align: center; color: #999; margin-top: 50px;">
+                <p>暂无目标数据</p>
+                <p>点击右上角"添加目标"开始创建您的第一个目标</p>
+            </div>
+        `;
+        goalList.appendChild(emptyMessage);
+        return;
+    }
+    
+    filteredGoals.forEach((goal, index) => {
+        const goalCard = document.createElement('div');
+        goalCard.className = 'project-card project-panel-card';
+        goalCard.dataset.goalId = goal.goal_id;
+        
+        // 计算关联项目和任务数量
+        const linkedProjects = getGoalLinkedProjects(goal.goal_id);
+        const linkedTasks = getGoalLinkedTasks(goal.goal_id);
+        
+        // 计算完成进度
+        const totalItems = linkedProjects.length + linkedTasks.length;
+        const completedItems = getGoalCompletedItems(goal.goal_id);
+        const completionRate = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+        
+        goalCard.innerHTML = `
+            <div class="project-card-content">
+                <div class="project-sequence-number">${index + 1}</div>
+                <div class="project-info">
+                    <div class="project-name">${goal.title}</div>
+                    <div class="project-stats">
+                        <span class="task-stats">项目: ${linkedProjects.length}</span>
+                        <span class="task-stats">任务: ${linkedTasks.length}</span>
+                        <span class="completion-rate">${completionRate.toFixed(0)}%</span>
+                        <span class="task-stats">积分: ${goal.base_points || 0}</span>
+                    </div>
+                    ${goal.description ? `<div class="project-description">${goal.description}</div>` : ''}
+                </div>
+                <div class="project-card-actions">
+                    <button class="action-btn edit-btn" title="编辑" onclick="editGoal('${goal.goal_id}'); event.stopPropagation();">
+                        ✏️
+                    </button>
+                    <button class="action-btn delete-btn" title="删除">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // 添加点击事件
+        goalCard.addEventListener('click', () => {
+            selectGoal(goal.goal_id);
+        });
+        
+        // 为删除按钮添加事件监听器
+        const deleteBtn = goalCard.querySelector('.delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteGoal(goal.goal_id);
+            });
+        }
+        
+        goalList.appendChild(goalCard);
+    });
+    
+    // 更新目标清单标题中的数量
+    updateGoalListTitle(filteredGoals.length);
+}
+
+// 选择目标
+function selectGoal(goalId) {
+    console.log('选择目标:', goalId);
+    
+    // 移除之前选中的目标
+    document.querySelectorAll('.project-panel-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // 选中当前目标
+    const selectedCard = document.querySelector(`[data-goal-id="${goalId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        console.log('目标卡片已选中:', selectedCard);
+    }
+    
+    selectedGoalId = goalId;
+    
+    // 更新右侧详情
+    renderGoalDetails(goalId);
+}
+
+// 渲染目标详情
+function renderGoalDetails(goalId) {
+    console.log('渲染目标详情:', goalId);
+    
+    // 调试：检查localStorage数据
+    console.log('=== 调试信息 ===');
+    const allGoals = getGoals();
+    const allProjects = getProjects();
+    console.log('所有目标数据:', allGoals);
+    console.log('所有项目数据:', allProjects);
+    console.log('localStorage goals:', localStorage.getItem('goals'));
+    console.log('localStorage projects:', localStorage.getItem('projects'));
+    
+    const goal = allGoals.find(g => g.goal_id === goalId);
+    if (!goal) {
+        console.log('未找到目标:', goalId);
+        return;
+    }
+    console.log('找到目标:', goal);
+    
+    // 设置当前选中的目标ID，用于添加任务功能
+    currentSelectedGoalId = goalId;
+    
+    // 更新目标名称
+    const selectedGoalName = document.getElementById('selectedGoalName');
+    if (selectedGoalName) {
+        selectedGoalName.textContent = goal.title;
+    }
+    
+    // 获取关联的项目和任务
+    const linkedProjects = getGoalLinkedProjects(goalId);
+    const linkedTasks = getGoalLinkedTasks(goalId);
+    console.log('关联项目:', linkedProjects.length, linkedProjects);
+    console.log('关联任务:', linkedTasks.length, linkedTasks);
+    
+    // 显示目标详情内容区域
+    const goalDetailContent = document.getElementById('goalDetailContent');
+    const goalEmptyState = document.getElementById('goalEmptyState');
+    
+    if (goalDetailContent && goalEmptyState) {
+        goalDetailContent.style.display = 'block';
+        goalEmptyState.style.display = 'none';
+        
+        // 更新目标基本信息
+        const goalDetailTitle = document.getElementById('goalDetailTitle');
+        const goalDetailCategory = document.getElementById('goalDetailCategory');
+        const goalDetailProgress = document.getElementById('goalDetailProgress');
+        
+        if (goalDetailTitle) {
+            goalDetailTitle.textContent = goal.title;
+        }
+        
+        if (goalDetailCategory) {
+            if (goal.tags && Array.isArray(goal.tags) && goal.tags.length > 0) {
+                goalDetailCategory.textContent = goal.tags.join(', ');
+            } else if (goal.category) {
+                // 兼容旧的category字段
+                goalDetailCategory.textContent = goal.category;
+            } else {
+                goalDetailCategory.textContent = '无标签';
+            }
+        }
+        
+        if (goalDetailProgress) {
+            const totalItems = linkedProjects.length + linkedTasks.length;
+            const completedItems = getGoalCompletedItems(goalId);
+            goalDetailProgress.textContent = `进度: ${completedItems}/${totalItems}`;
+        }
+        
+        // 渲染任务卡片
+        renderGoalTaskCards(linkedProjects, linkedTasks);
+    }
+    
+    // 显示底部操作栏
+    const bottomBar = document.getElementById('goalDetailBottom');
+    if (bottomBar) {
+        bottomBar.style.display = (linkedProjects.length > 0 || linkedTasks.length > 0) ? 'flex' : 'none';
+    }
+    
+    // 显示添加任务按钮
+    const addTaskBtn = document.getElementById('addGoalTaskBtn');
+    if (addTaskBtn) {
+        addTaskBtn.style.display = 'block';
+    }
+}
+
+// 获取目标关联的项目
+function getGoalLinkedProjects(goalId) {
+    const projects = getProjects();
+    return projects.filter(project => 
+        project.linked_goals && project.linked_goals.includes(goalId)
+    );
+}
+
+// 获取目标关联的任务
+function getGoalLinkedTasks(goalId) {
+    const projects = getProjects();
+    const goals = getGoals();
+    const tasks = [];
+    
+    // 方法1：从项目中查找linked_goal字段
+    projects.forEach(project => {
+        if (project.subtasks) {
+            project.subtasks.forEach(task => {
+                if (task.linked_goal === goalId) {
+                    tasks.push({
+                        ...task,
+                        projectName: project.name
+                    });
+                }
+            });
+        }
+    });
+    
+    // 方法2：从目标的associatedTasks数组中查找
+    const goal = goals.find(g => g.goal_id === goalId);
+    if (goal && goal.associatedTasks) {
+        goal.associatedTasks.forEach(associatedTask => {
+            // 查找对应的项目和任务
+            const project = projects.find(p => p.id === associatedTask.projectId);
+            if (project && project.subtasks) {
+                const task = project.subtasks.find(t => t.uniqueId === associatedTask.taskId);
+                if (task) {
+                    // 检查是否已经通过方法1添加过了
+                    const existingTask = tasks.find(t => t.uniqueId === task.uniqueId);
+                    if (!existingTask) {
+                        tasks.push({
+                            ...task,
+                            projectName: project.name
+                        });
+                    }
+                }
+            }
+        });
+    }
+    
+    return tasks;
+}
+
+// 获取目标已完成项目和任务数量
+function getGoalCompletedItems(goalId) {
+    const linkedProjects = getGoalLinkedProjects(goalId);
+    const linkedTasks = getGoalLinkedTasks(goalId);
+    
+    let completedCount = 0;
+    
+    // 计算完成的项目（所有任务都完成的项目）
+    linkedProjects.forEach(project => {
+        const subtasks = project.subtasks || [];
+        if (subtasks.length > 0) {
+            const completedSubtasks = subtasks.filter(s => s.status === 1);
+            if (completedSubtasks.length === subtasks.length) {
+                completedCount++;
+            }
+        }
+    });
+    
+    // 计算完成的任务
+    completedCount += linkedTasks.filter(task => task.status === 1).length;
+    
+    return completedCount;
+}
+
+// 渲染目标任务卡片
+function renderGoalTaskCards(linkedProjects, linkedTasks) {
+    const goalTaskCards = document.getElementById('goalTaskCards');
+    if (!goalTaskCards) return;
+    
+    goalTaskCards.innerHTML = '';
+    
+    // 按项目分组任务
+    const projectTaskGroups = new Map();
+    
+    // 处理关联项目，为每个项目创建分组
+    linkedProjects.forEach(project => {
+        const subtasks = project.subtasks || [];
+        const projectTasks = subtasks.filter(task => task.linked_goal === selectedGoalId);
+        
+        if (!projectTaskGroups.has(project.id)) {
+            projectTaskGroups.set(project.id, {
+                project: project,
+                tasks: []
+            });
+        }
+        
+        projectTaskGroups.get(project.id).tasks.push(...projectTasks);
+    });
+    
+    // 处理独立任务，按项目分组
+    linkedTasks.forEach(task => {
+        const project = linkedProjects.find(p => p.name === task.projectName);
+        if (project) {
+            if (!projectTaskGroups.has(project.id)) {
+                projectTaskGroups.set(project.id, {
+                    project: project,
+                    tasks: []
+                });
+            }
+            
+            // 检查任务是否已经存在
+            const existingTask = projectTaskGroups.get(project.id).tasks.find(t => t.uniqueId === task.uniqueId);
+            if (!existingTask) {
+                projectTaskGroups.get(project.id).tasks.push(task);
+            }
+        }
+    });
+    
+    // 渲染项目分组
+    if (projectTaskGroups.size === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'goal-tasks-empty';
+        emptyMessage.innerHTML = `
+            <div class="empty-icon">📋</div>
+            <p>该目标暂无关联的任务</p>
+            <p class="empty-hint">您可以在项目管理中将任务关联到此目标</p>
+        `;
+        goalTaskCards.appendChild(emptyMessage);
+        return;
+    }
+    
+    projectTaskGroups.forEach((group, projectId) => {
+        const { project, tasks } = group;
+        
+        // 创建项目容器
+        const projectContainer = document.createElement('div');
+        projectContainer.className = 'goal-project-container';
+        
+        // 计算项目完成状态
+        const completedTasks = tasks.filter(t => t.status === 1);
+        const isProjectCompleted = tasks.length > 0 && completedTasks.length === tasks.length;
+        
+        // 项目标题区域
+        const projectHeader = document.createElement('div');
+        projectHeader.className = 'goal-project-header';
+        projectHeader.innerHTML = `
+            <div class="project-header-left">
+                <div class="project-icon">📁</div>
+                <div class="project-title">${project.name}</div>
+                <div class="project-progress">${completedTasks.length}/${tasks.length} 任务</div>
+            </div>
+            <div class="project-status ${isProjectCompleted ? 'completed' : 'in-progress'}">
+                ${isProjectCompleted ? '已完成' : '进行中'}
+            </div>
+        `;
+        
+        // 任务列表容器
+        const tasksList = document.createElement('div');
+        tasksList.className = 'goal-project-tasks';
+        
+        // 渲染任务列表
+        tasks.forEach(task => {
+            const taskItem = document.createElement('div');
+            taskItem.className = `goal-task-item ${task.status === 1 ? 'completed' : 'in-progress'}`;
+            
+            taskItem.innerHTML = `
+                <div class="task-item-left">
+                    <div class="task-icon">📝</div>
+                    <div class="task-title">${task.name}</div>
+                </div>
+                <div class="task-item-right">
+                    ${task.completeTime ? `<span class="task-time">${new Date(task.completeTime).toLocaleDateString()}</span>` : ''}
+                    <div class="task-status ${task.status === 1 ? 'completed' : 'in-progress'}">
+                        ${task.status === 1 ? '已完成' : '进行中'}
+                    </div>
+                </div>
+            `;
+            
+            tasksList.appendChild(taskItem);
+        });
+        
+        // 组装项目容器
+        projectContainer.appendChild(projectHeader);
+        projectContainer.appendChild(tasksList);
+        goalTaskCards.appendChild(projectContainer);
+    });
+}
+
+// 初始化目标搜索功能
+function initGoalSearch() {
+    const searchIconContainer = document.getElementById('goalSearchIconContainer');
+    const searchInputExpanded = document.getElementById('goalSearchInputExpanded');
+    const headerGoalSearch = document.getElementById('headerGoalSearch');
+    const headerClearGoalSearch = document.getElementById('headerClearGoalSearch');
+    
+    if (!searchIconContainer || !searchInputExpanded || !headerGoalSearch) return;
+    
+    // 搜索图标点击事件
+    searchIconContainer.addEventListener('click', (e) => {
+        if (e.target.closest('.search-input-expanded')) return;
+        
+        if (searchInputExpanded.classList.contains('show')) {
+            searchInputExpanded.classList.remove('show');
+            headerGoalSearch.value = '';
+            goalPanelSearchTerm = '';
+            renderGoalPanelList();
+        } else {
+            searchInputExpanded.classList.add('show');
+            setTimeout(() => headerGoalSearch.focus(), 100);
+        }
+    });
+    
+    // 搜索输入事件
+    headerGoalSearch.addEventListener('input', (e) => {
+        goalPanelSearchTerm = e.target.value;
+        renderGoalPanelList();
+    });
+    
+    // 清除搜索按钮
+    if (headerClearGoalSearch) {
+        headerClearGoalSearch.addEventListener('click', () => {
+            headerGoalSearch.value = '';
+            goalPanelSearchTerm = '';
+            renderGoalPanelList();
+        });
+    }
+    
+    // ESC键关闭搜索
+    headerGoalSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInputExpanded.classList.remove('show');
+            headerGoalSearch.value = '';
+            goalPanelSearchTerm = '';
+            renderGoalPanelList();
+        }
+    });
+}
+
+// 初始化添加目标按钮
+function initAddGoalButton() {
+    console.log('初始化添加目标按钮...');
+    const addGoalBtn = document.getElementById('addGoalBtn');
+    console.log('找到addGoalBtn元素:', addGoalBtn);
+    if (addGoalBtn) {
+        console.log('addGoalBtn已在index.html中绑定，跳过重复绑定');
+        // 注释掉重复的事件绑定，使用index.html中的绑定
+        // addGoalBtn.addEventListener('click', () => {
+        //     console.log('addGoalBtn被点击了!');
+        //     showAddGoalModal();
+        // });
+    } else {
+        console.error('未找到addGoalBtn元素!');
+    }
+    
+    // 初始化添加任务按钮
+    const addGoalTaskBtn = document.getElementById('addGoalTaskBtn');
+    if (addGoalTaskBtn) {
+        addGoalTaskBtn.addEventListener('click', () => {
+            showSelectTaskModal();
+        });
+    }
+    
+    // 初始化选择任务弹窗事件
+    initSelectTaskModal();
+}
+
+// 添加目标弹窗样式
+function addGoalModalStyles() {
+    if (document.getElementById('goal-modal-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'goal-modal-styles';
+    style.textContent = `
+        .goal-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .goal-modal {
+            background: white;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .goal-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        
+        .goal-modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .goal-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .goal-modal-close:hover {
+            color: #333;
+        }
+        
+        .goal-modal-body {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .goal-modal .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .goal-modal .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .goal-modal .form-group input,
+        .goal-modal .form-group textarea,
+        .goal-modal .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .goal-modal .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .goal-modal .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .goal-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+        
+        .goal-modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .goal-modal .save-btn {
+            background: #50b767;
+            color: white;
+        }
+        
+        .goal-modal .save-btn:hover {
+            background: #45a049;
+        }
+        
+        .goal-modal .cancel-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .goal-modal .cancel-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        /* 标签相关样式 */
+        .tags-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        
+        /* 编辑目标标签样式 */
+        .edit-tag-container {
+            margin: 15px 0;
+        }
+        
+        .edit-tag-section {
+            margin-bottom: 15px;
+        }
+        
+        .edit-tag-section h5 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .edit-selected-tags, .edit-available-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 32px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+        
+        .edit-tag-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #1976d2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .edit-tag-item:hover {
+            background: #bbdefb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .edit-tag-item.selected {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        .edit-tag-item .remove-btn {
+            background: none;
+            border: none;
+            color: #1976d2;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+            margin-left: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .edit-tag-item .remove-btn:hover {
+            background: #f44336;
+            color: white;
+        }
+        
+        .edit-custom-tag-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .edit-custom-tag-input input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .edit-custom-tag-input input:focus {
+            border-color: #50b767;
+            box-shadow: 0 0 0 2px rgba(80, 183, 103, 0.2);
+        }
+        
+        .edit-custom-tag-input button {
+            padding: 6px 12px;
+            background: #50b767;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .edit-custom-tag-input button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+        
+        .edit-custom-tag-input button:active {
+            transform: translateY(0);
+        }
+        
+        .selected-tags {
+            margin-bottom: 10px;
+            min-height: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .selected-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #50b767;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            gap: 5px;
+        }
+        
+        .remove-tag-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .remove-tag-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .tag-input-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .tag-input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .add-tag-btn {
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+        
+        .add-tag-btn:hover {
+            background: #0056b3;
+        }
+        
+        .available-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .available-tag {
+            display: inline-block;
+            background: #e9ecef;
+            color: #495057;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #dee2e6;
+        }
+        
+        .available-tag:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        /* 并排布局优化样式 */
+        .goal-modal .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .goal-modal .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .goal-modal .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        /* 新的并排容器布局样式 */
+        .goal-modal .form-row-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+        
+        .goal-modal .form-left-group {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 10px;
+        }
+        
+        .goal-modal .form-right-group {
+            flex: 0.8;
+            padding-left: 10px;
+        }
+        
+        .goal-modal .form-left-group .form-group {
+            margin-bottom: 0;
+        }
+        
+        .goal-modal .form-right-group .form-group {
+            margin-bottom: 0;
+        }
+        
+        .tags-container {
+            min-height: 120px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .goal-modal {
+                width: 95%;
+                max-width: none;
+                margin: 10px;
+            }
+            
+            .goal-modal-body {
+                padding: 15px;
+            }
+            
+            /* 小屏幕下改为垂直布局 */
+            .goal-modal .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .goal-modal .form-row .form-group {
+                margin-bottom: 12px;
+            }
+            
+            .goal-modal .form-row-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .goal-modal .form-left-group {
+                gap: 15px;
+            }
+            
+            .goal-modal .form-left-group .form-group,
+            .goal-modal .form-right-group .form-group {
+                margin-bottom: 12px;
+            }
+            
+            .goal-modal .grid-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .goal-modal {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+            
+            .goal-modal-body {
+                padding: 10px;
+                max-height: calc(100vh - 120px);
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// 显示添加目标弹窗 - 使用index.html中已存在的弹窗
+function showAddGoalModal() {
+    console.log('gms.js showAddGoalModal called - 使用index.html中的弹窗');
+    
+    // 调用index.html中定义的原始函数
+    if (typeof window.originalShowAddGoalModal === 'function') {
+        window.originalShowAddGoalModal();
+        return;
+    }
+    
+    // 如果没有原始函数，则直接操作现有的弹窗
+    console.log('直接操作现有弹窗');
+    
+    // 确保弹窗样式已加载
+    if (typeof addGoalModalStyles === 'function') {
+        addGoalModalStyles();
+    }
+    
+    const modal = document.getElementById('addGoalModal');
+    console.log('找到弹窗元素:', modal);
+    
+    if (!modal) {
+        console.error('未找到addGoalModal元素');
+        return;
+    }
+    
+    // 清空表单 - 使用正确的ID
+    const goalTitle = document.getElementById('addGoalTitle');
+    const goalDescription = document.getElementById('addGoalDescription');
+    const goalPriority = document.getElementById('addGoalPriority');
+    const goalDeadline = document.getElementById('addGoalDeadline');
+    const goalTags = document.getElementById('addGoalTags');
+    
+    console.log('表单元素检查:', {
+        goalTitle: !!goalTitle,
+        goalDescription: !!goalDescription,
+        goalPriority: !!goalPriority,
+        goalDeadline: !!goalDeadline,
+        goalTags: !!goalTags
+    });
+    
+    // 添加null检查防护
+    if (goalTitle) goalTitle.value = '';
+    if (goalDescription) goalDescription.value = '';
+    if (goalPriority) goalPriority.value = 'medium';
+    if (goalDeadline) goalDeadline.value = '';
+    if (goalTags) goalTags.value = '';
+    
+    // 清空所有预置标签的选中状态
+    const presetTags = document.querySelectorAll('.preset-tag');
+    console.log('找到预置标签数量:', presetTags.length);
+    presetTags.forEach(tag => {
+        tag.classList.remove('selected');
+    });
+    
+    // 显示弹窗
+    modal.style.display = 'flex';
+    console.log('弹窗已显示');
+    
+    // 延迟初始化标签选择事件，确保DOM已渲染
+    setTimeout(() => {
+        console.log('开始初始化标签选择事件');
+        if (typeof initTagSelection === 'function') {
+            initTagSelection();
+        } else {
+            console.warn('initTagSelection函数未找到');
+        }
+    }, 100);
+    
+    // 绑定事件
+    const closeBtn = modal.querySelector('.goal-modal-close');
+    const cancelBtn = modal.querySelector('#addGoalCancelBtn');
+    const submitBtn = modal.querySelector('#addGoalSubmitBtn');
+    
+    const closeModal = () => {
+        document.body.removeChild(modal);
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    submitBtn.addEventListener('click', () => {
+        const titleElement = document.getElementById('addGoalName');
+        const descriptionElement = document.getElementById('addGoalDescription');
+        const optionalElement = document.getElementById('addGoalOptional');
+        const pointsElement = document.getElementById('addGoalPoints');
+        
+        // 添加null检查
+        if (!titleElement || !descriptionElement || !optionalElement || !pointsElement) {
+            console.error('无法找到必要的表单元素');
+            alert('表单元素加载错误，请刷新页面重试');
+            return;
+        }
+        
+        // 再次检查元素是否存在并安全访问value属性
+        const title = (titleElement && titleElement.value) ? titleElement.value.trim() : '';
+        const description = (descriptionElement && descriptionElement.value) ? descriptionElement.value.trim() : '';
+        const order = 1; // 移除对不存在的addGoalOrder元素的访问，使用默认值
+        const isOptional = optionalElement ? optionalElement.checked : false;
+        const points = (pointsElement && pointsElement.value) ? parseInt(pointsElement.value) || 50 : 50;
+        const tags = getSelectedTags(); // 获取选中的标签
+        
+        if (!title) {
+            alert('请输入目标名称');
+            return;
+        }
+        
+        if (points < 1 || points > 1000) {
+            alert('积分必须在1-1000之间');
+            return;
+        }
+        
+        // 生成新的目标ID
+        const existingGoals = getGoals();
+        const maxId = existingGoals.length > 0 ? 
+            Math.max(...existingGoals.map(g => parseInt(g.goal_id.replace('g_', '')))) : 10000;
+        
+        const newGoal = {
+            goal_id: `g_${maxId + 1}`,
+            title: title,
+            description: description,
+            order: order,
+            is_optional: isOptional,
+            base_points: points,
+            tags: tags
+        };
+        
+        existingGoals.push(newGoal);
+        saveGoals(existingGoals);
+        
+        renderGoalPanelList();
+        closeModal();
+        
+        // 自动选中新添加的目标
+        setTimeout(() => {
+            selectGoal(newGoal.goal_id);
+        }, 100);
+    });
+    
+    // 点击遮罩关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // 里程碑选项已移除
+}
+
+// loadMilestoneOptions函数已移除，因为不再需要里程碑字段
+
+// 渲染目标分类标签
+function renderGoalCategoryTags() {
+    const categoryContainer = document.getElementById('goalPanelCategoryTags');
+    if (!categoryContainer) return;
+    
+    const goals = getGoals();
+    const categories = [...new Set(goals.map(g => g.category).filter(c => c))];
+    
+    categoryContainer.innerHTML = '';
+    
+    // 添加"全部"标签
+    const allTag = document.createElement('span');
+    allTag.className = `category-tag ${!goalPanelSelectedCategory ? 'active' : ''}`;
+    allTag.textContent = '全部';
+    allTag.addEventListener('click', () => {
+        goalPanelSelectedCategory = null;
+        renderGoalCategoryTags();
+        renderGoalPanelList();
+    });
+    categoryContainer.appendChild(allTag);
+    
+    // 添加分类标签
+    categories.forEach(category => {
+        const tag = document.createElement('span');
+        tag.className = `category-tag ${goalPanelSelectedCategory === category ? 'active' : ''}`;
+        tag.textContent = category;
+        tag.addEventListener('click', () => {
+            goalPanelSelectedCategory = category;
+            renderGoalCategoryTags();
+            renderGoalPanelList();
+        });
+        categoryContainer.appendChild(tag);
+    });
+}
+
+// 选择任务弹窗相关函数
+let currentSelectedGoalId = null;
+let selectedTasksForGoal = [];
+
+// 确保目标弹窗样式已加载
+function ensureGoalModalStyles() {
+    // 检查是否已经添加了样式
+    if (document.getElementById('goalModalStyles')) {
+        return;
+    }
+    
+    // 创建样式元素
+    const style = document.createElement('style');
+    style.id = 'goalModalStyles';
+    style.textContent = `
+        /* 选择任务弹窗样式 */
+        .goal-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .goal-modal {
+            background: white;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .goal-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        
+        .goal-modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .goal-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .goal-modal-close:hover {
+            color: #333;
+        }
+        
+        .goal-modal-body {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .select-task-content {
+            display: flex;
+            gap: 20px;
+            height: 400px;
+        }
+        
+        .select-task-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .select-task-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .select-task-search {
+            margin-bottom: 15px;
+        }
+        
+        .task-search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .select-task-list {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        /* 项目卡片样式 */
+        .project-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 10px;
+        }
+        
+        .project-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-card:hover {
+            border-color: #50b767;
+        }
+        
+        .project-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .project-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+            line-height: 1.3;
+            flex: 1;
+            margin-right: 8px;
+        }
+        
+        .project-status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .project-status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .project-status-badge.completed {
+            background: #cce5ff;
+            color: #0056b3;
+        }
+        
+        .project-status-badge.paused {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .project-card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .project-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .project-stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+        
+        .project-stat-label {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        .project-progress {
+            margin-bottom: 12px;
+        }
+        
+        .project-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+        
+        .project-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .project-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #50b767, #45a049);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .project-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f3f4;
+        }
+        
+        .project-last-activity {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        .project-select-btn {
+            background: #50b767;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .project-select-btn:hover {
+            background: #45a049;
+        }
+        
+        /* 加载状态样式 */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #50b767;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 空状态样式 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            text-align: center;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            color: #dee2e6;
+            margin-bottom: 16px;
+        }
+        
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state-description {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        /* 返回按钮样式 */
+        .back-to-projects {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+        }
+        
+        .back-to-projects:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .project-cards-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 8px;
+            }
+            
+            .project-card {
+                padding: 12px;
+            }
+            
+            .project-card-title {
+                font-size: 15px;
+            }
+            
+            .project-card-stats {
+                margin-bottom: 10px;
+            }
+            
+            .project-stat-value {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .select-task-content {
+                flex-direction: column;
+                height: auto;
+                gap: 15px;
+            }
+            
+            .select-task-left,
+            .select-task-right {
+                flex: none;
+            }
+            
+            .select-task-list {
+                height: 300px;
+            }
+            
+            .selected-task-preview {
+                height: 200px;
+            }
+        }
+        
+        .select-task-project-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .select-task-project-header h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .task-count {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+        }
+        
+        .select-task-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .select-task-item:hover {
+            background: #f0f8ff;
+            border-color: #50b767;
+        }
+        
+        .select-task-item.selected {
+            background: #e8f5e8;
+            border-color: #50b767;
+        }
+        
+        .task-checkbox input[type="checkbox"] {
+            margin: 0;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .task-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .task-status {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        .task-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .task-status.in-progress {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .task-status.pending {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .selected-task-preview {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .selected-task-preview h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .no-selection {
+            text-align: center;
+            color: #999;
+            padding: 50px 20px;
+        }
+        
+        .preview-header h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .preview-task-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-task-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .preview-project-name {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        .remove-task-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+        
+        .remove-task-btn:hover {
+            background: #c82333;
+        }
+        
+        .goal-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+        
+        .goal-modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .confirm-btn {
+            background: #50b767;
+            color: white;
+        }
+        
+        .confirm-btn:hover {
+            background: #45a049;
+        }
+        
+        .confirm-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .cancel-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .cancel-btn:hover {
+            background: #e0e0e0;
+        }
+    `;
+    
+    // 添加到页面头部
+    document.head.appendChild(style);
+}
+
+// 显示选择任务弹窗
+function showSelectTaskModal() {
+    const modal = document.getElementById('selectTaskModal');
+    
+    if (modal) {
+        // 确保样式已加载
+        ensureGoalModalStyles();
+        
+        // 显示弹窗（使用flex布局居中）
+        modal.style.display = 'flex';
+        
+        // 加载项目和任务数据
+        loadProjectsAndTasks();
+        
+        // 清空之前的选择
+        selectedTasksForGoal = [];
+        updateTaskPreview();
+    }
+}
+
+// 隐藏选择任务弹窗
+function hideSelectTaskModal() {
+    const modal = document.getElementById('selectTaskModal');
+    
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 加载项目和任务数据
+function loadProjectsAndTasks() {
+    const projects = getProjects();
+    const taskList = document.getElementById('selectTaskList');
+    
+    if (!taskList) return;
+    
+    // 显示加载状态
+    taskList.innerHTML = '<div class="loading-state">正在加载项目...</div>';
+    
+    // 模拟异步加载
+    setTimeout(() => {
+        taskList.innerHTML = '';
+        
+        if (projects.length === 0) {
+            // 显示空状态
+            taskList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📁</div>
+                    <div class="empty-text">暂无项目</div>
+                    <div class="empty-desc">请先创建项目后再进行关联</div>
+                </div>
+            `;
+            return;
+        }
+        
+        // 创建项目卡片
+        projects.forEach(project => {
+            const projectCard = document.createElement('div');
+            projectCard.className = 'select-task-card';
+            projectCard.dataset.projectId = project.id;
+            
+            // 项目卡片只显示名称，不需要统计信息
+            
+            projectCard.innerHTML = `
+                <div class="project-name">${project.name || '未命名项目'}</div>
+            `;
+            
+            // 添加点击事件（整个卡片可点击）
+            projectCard.addEventListener('click', () => {
+                selectProject(project.id, project.name);
+            });
+            
+            taskList.appendChild(projectCard);
+        });
+    }, 300);
+}
+
+// 获取任务状态文本
+function getTaskStatusText(task) {
+    if (task.completed) return '已完成';
+    if (task.status === 'in-progress') return '进行中';
+    return '待开始';
+}
+
+// 获取项目状态
+function getProjectStatus(project) {
+    if (!project.subtasks || project.subtasks.length === 0) {
+        return { class: 'status-empty', text: '无任务' };
+    }
+    
+    const totalTasks = project.subtasks.length;
+    const completedTasks = project.subtasks.filter(task => task.status === 1).length;
+    const inProgressTasks = project.subtasks.filter(task => task.status === 0).length;
+    
+    if (completedTasks === totalTasks) {
+        return { class: 'status-completed', text: '已完成' };
+    } else if (inProgressTasks > 0) {
+        return { class: 'status-active', text: '进行中' };
+    } else {
+        return { class: 'status-pending', text: '待开始' };
+    }
+}
+
+// 选择项目
+function selectProject(projectId, projectName) {
+    // 显示项目的任务列表
+    showProjectTasks(projectId, projectName);
+}
+
+// 显示项目的任务列表
+function showProjectTasks(projectId, projectName) {
+    const projects = getProjects();
+    const project = projects.find(p => p.id === projectId);
+    const taskList = document.getElementById('selectTaskList');
+    
+    if (!project || !taskList) return;
+    
+    taskList.innerHTML = `
+        <div class="project-tasks-header">
+            <button class="back-to-projects-btn" onclick="loadProjectsAndTasks()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+                返回项目列表
+            </button>
+            <h3>${projectName}</h3>
+        </div>
+        <div class="project-tasks-content">
+            ${project.subtasks && project.subtasks.length > 0 ? 
+                project.subtasks.map(task => {
+                    const statusClass = task.status === 1 ? 'completed' : 
+                                      (task.status === 0 ? 'pending' : 'pending');
+                    
+                    return `
+                        <div class="select-task-card task-selectable" data-project-id="${project.id}" data-task-id="${task.uniqueId}" data-task-name="${task.name}" data-project-name="${projectName}">
+                            <div class="task-info">
+                                <div class="task-name">${task.name}</div>
+                                <div class="task-meta">
+                                    <span class="task-status ${statusClass}">${task.status === 1 ? '已完成' : '待开始'}</span>
+                                    ${task.dueDate ? `<span class="task-due">截止: ${task.dueDate}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('') : 
+                '<div class="empty-tasks">该项目暂无任务</div>'
+            }
+        </div>
+    `;
+    
+    // 为任务卡片添加点击事件监听
+    if (project.subtasks && project.subtasks.length > 0) {
+        const taskCards = taskList.querySelectorAll('.task-selectable');
+        taskCards.forEach(taskCard => {
+            taskCard.addEventListener('click', () => {
+                const projectId = taskCard.dataset.projectId;
+                const taskId = taskCard.dataset.taskId;
+                const taskName = taskCard.dataset.taskName;
+                const projectName = taskCard.dataset.projectName;
+                
+                // 选择任务并在右侧预览区显示
+                selectTaskForPreview(projectId, taskId, taskName, projectName, taskCard);
+            });
+        });
+    }
+}
+
+// 选择任务并在预览区显示（支持多任务选择）
+function selectTaskForPreview(projectId, taskId, taskName, projectName, taskCard) {
+    const taskKey = `${projectId}_${taskId}`;
+    
+    // 检查任务是否已经被选中
+    const existingTaskIndex = selectedTasksForGoal.findIndex(t => t.key === taskKey);
+    
+    if (existingTaskIndex !== -1) {
+        // 任务已选中，移除选择
+        selectedTasksForGoal.splice(existingTaskIndex, 1);
+        taskCard.classList.remove('selected');
+    } else {
+        // 任务未选中，添加到选择列表
+        selectedTasksForGoal.push({
+            key: taskKey,
+            projectId: projectId,
+            taskId: taskId,
+            taskName: taskName,
+            projectName: projectName
+        });
+        taskCard.classList.add('selected');
+    }
+    
+    // 更新预览区显示
+    updateTaskPreview();
+}
+
+// 处理任务选择（保留原有函数以兼容其他功能）
+function handleTaskSelection(projectId, taskId, taskName, projectName, isSelected) {
+    const taskKey = `${projectId}_${taskId}`;
+    
+    if (isSelected) {
+        // 添加到选中列表
+        if (!selectedTasksForGoal.find(t => t.key === taskKey)) {
+            selectedTasksForGoal.push({
+                key: taskKey,
+                projectId: projectId,
+                taskId: taskId,
+                taskName: taskName,
+                projectName: projectName
+            });
+        }
+    } else {
+        // 从选中列表移除
+        selectedTasksForGoal = selectedTasksForGoal.filter(t => t.key !== taskKey);
+    }
+    
+    updateTaskPreview();
+}
+
+// 更新任务预览
+function updateTaskPreview() {
+    const previewContainer = document.getElementById('selectedTaskPreview');
+    const confirmBtn = document.getElementById('selectTaskConfirm');
+    
+    if (!previewContainer) return;
+    
+    if (selectedTasksForGoal.length === 0) {
+        previewContainer.innerHTML = '<div class="empty-preview">请从左侧选择任务</div>';
+        if (confirmBtn) confirmBtn.disabled = true;
+        return;
+    }
+    
+    if (confirmBtn) confirmBtn.disabled = false;
+    
+    // 显示选中的任务卡片，支持多任务管理
+    previewContainer.innerHTML = `
+        <div class="preview-header">
+            <h4>已选择的任务 (${selectedTasksForGoal.length})</h4>
+            <div class="preview-actions">
+                <button class="clear-all-btn" onclick="clearAllSelectedTasks()">清空所有</button>
+            </div>
+        </div>
+        <div class="preview-hint">点击任务卡片可移除选择</div>
+        <div class="preview-task-container">
+            ${selectedTasksForGoal.map(task => `
+                <div class="select-task-card preview-task-card" data-task-key="${task.key}">
+                    <div class="task-info">
+                        <div class="task-name">${task.taskName}</div>
+                    </div>
+                    <div class="task-remove-btn" title="移除此任务">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // 为预览区的任务卡片添加点击移除事件
+    const previewTaskCards = previewContainer.querySelectorAll('.preview-task-card');
+    previewTaskCards.forEach(taskCard => {
+        taskCard.addEventListener('click', (e) => {
+            // 如果点击的是移除按钮区域，阻止事件冒泡
+            if (e.target.closest('.task-remove-btn')) {
+                e.stopPropagation();
+                const taskKey = taskCard.dataset.taskKey;
+                removeSelectedTaskFromPreview(taskKey);
+            } else {
+                // 点击卡片其他区域也可以移除
+                const taskKey = taskCard.dataset.taskKey;
+                removeSelectedTaskFromPreview(taskKey);
+            }
+        });
+    });
+}
+
+// 从预览区移除选中的任务
+function removeSelectedTaskFromPreview(taskKey) {
+    // 从选中列表中移除任务
+    selectedTasksForGoal = selectedTasksForGoal.filter(t => t.key !== taskKey);
+    
+    // 移除对应任务卡片的选中状态
+    const taskCards = document.querySelectorAll('.task-selectable');
+    taskCards.forEach(card => {
+        const projectId = card.dataset.projectId;
+        const taskId = card.dataset.taskId;
+        const cardTaskKey = `${projectId}_${taskId}`;
+        if (cardTaskKey === taskKey) {
+            card.classList.remove('selected');
+        }
+    });
+    
+    // 更新预览区显示
+    updateTaskPreview();
+}
+
+// 清空所有选中的任务
+function clearAllSelectedTasks() {
+    // 清空选中的任务列表
+    selectedTasksForGoal = [];
+    
+    // 移除所有任务卡片的选中状态
+    const allTaskCards = document.querySelectorAll('.task-selectable');
+    allTaskCards.forEach(card => card.classList.remove('selected'));
+    
+    // 更新预览区显示
+    updateTaskPreview();
+}
+
+// 从预览区返回到任务列表（保留兼容性）
+function returnToTaskList(taskKey) {
+    // 移除单个任务
+    removeSelectedTaskFromPreview(taskKey);
+}
+
+// 移除选中的任务（保留原有函数以兼容其他功能）
+function removeSelectedTask(taskKey) {
+    selectedTasksForGoal = selectedTasksForGoal.filter(t => t.key !== taskKey);
+    
+    // 取消对应的复选框
+    const checkbox = document.getElementById(`task_${taskKey}`);
+    if (checkbox) {
+        checkbox.checked = false;
+    }
+    
+    updateTaskPreview();
+}
+
+// 确认选择任务
+function confirmSelectTasks() {
+    if (selectedTasksForGoal.length === 0) {
+        showMessage('请先选择要关联的任务', 'warning');
+        return;
+    }
+    
+    if (!currentSelectedGoalId) {
+        showMessage('未找到目标信息', 'error');
+        return;
+    }
+    
+    try {
+        // 获取当前目标
+        const goals = getGoals();
+        const goalIndex = goals.findIndex(g => g.goal_id === currentSelectedGoalId);
+        
+        if (goalIndex === -1) {
+            showMessage('目标不存在', 'error');
+            return;
+        }
+        
+        // 初始化关联任务数组
+        if (!goals[goalIndex].associatedTasks) {
+            goals[goalIndex].associatedTasks = [];
+        }
+        
+        let addedCount = 0;
+        
+        // 添加新的关联任务
+        selectedTasksForGoal.forEach(task => {
+            const existingTask = goals[goalIndex].associatedTasks.find(
+                t => t.projectId === task.projectId && t.taskId === task.taskId
+            );
+            
+            if (!existingTask) {
+                goals[goalIndex].associatedTasks.push({
+                    projectId: task.projectId,
+                    taskId: task.taskId,
+                    taskName: task.taskName,
+                    projectName: task.projectName,
+                    associatedAt: new Date().toISOString()
+                });
+                addedCount++;
+            }
+        });
+        
+        // 保存到数据库
+        saveGoals(goals);
+        
+        // 清空选中状态
+        selectedTasksForGoal = [];
+        
+        // 刷新目标详情显示
+        if (typeof renderGoalDetails === 'function') {
+            renderGoalDetails(currentSelectedGoalId);
+        }
+        
+        // 关闭弹窗
+        hideSelectTaskModal();
+        
+        // 显示成功消息
+        if (addedCount > 0) {
+            showMessage(`成功关联 ${addedCount} 个任务到目标`, 'success');
+        } else {
+            showMessage('所选任务已经关联过了', 'info');
+        }
+        
+    } catch (error) {
+        console.error('关联任务时发生错误:', error);
+        showMessage('关联任务失败，请重试', 'error');
+    }
+}
+
+// 搜索任务
+function searchTasks() {
+    const searchInput = document.getElementById('taskSearchInput');
+    const taskItems = document.querySelectorAll('.select-task-item');
+    const projectHeaders = document.querySelectorAll('.select-task-project-header');
+    
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    
+    if (searchTerm === '') {
+        // 显示所有任务和项目标题
+        taskItems.forEach(item => item.style.display = 'flex');
+        projectHeaders.forEach(header => header.style.display = 'block');
+        return;
+    }
+    
+    // 隐藏所有项目标题
+    projectHeaders.forEach(header => header.style.display = 'none');
+    
+    // 搜索并显示匹配的任务
+    taskItems.forEach(item => {
+        const taskName = item.querySelector('.task-name');
+        if (taskName && taskName.textContent.toLowerCase().includes(searchTerm)) {
+            item.style.display = 'flex';
+            // 显示对应的项目标题
+            let prevElement = item.previousElementSibling;
+            while (prevElement) {
+                if (prevElement.classList.contains('select-task-project-header')) {
+                    prevElement.style.display = 'block';
+                    break;
+                }
+                prevElement = prevElement.previousElementSibling;
+            }
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// 初始化选择任务弹窗
+function initSelectTaskModal() {
+    // 搜索功能
+    const searchInput = document.getElementById('taskSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchTasks);
+    }
+    
+    // 取消按钮
+    const cancelBtn = document.getElementById('selectTaskCancel');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideSelectTaskModal);
+    }
+    
+    // 确认按钮
+    const confirmBtn = document.getElementById('selectTaskConfirm');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', confirmSelectTasks);
+    }
+    
+    // 关闭按钮
+    const closeBtn = document.getElementById('selectTaskModalClose');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideSelectTaskModal);
+    }
+    
+    // 点击遮罩层关闭
+    const modal = document.getElementById('selectTaskModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideSelectTaskModal();
+            }
+        });
+    }
+}
+
+// 标签系统相关功能
+let goalTags = {
+    defaultTags: ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '政治', '音乐', '美术', '体育'],
+    customTags: [],
+    selectedTags: []
+};
+
+// 初始化标签系统
+function initGoalTagsSystem() {
+    console.log('initGoalTagsSystem called - 开始初始化标签系统');
+    // 从localStorage加载自定义标签
+    const savedCustomTags = localStorage.getItem('goalCustomTags');
+    if (savedCustomTags) {
+        goalTags.customTags = JSON.parse(savedCustomTags);
+    }
+    
+    console.log('goalTags:', goalTags);
+    
+    // 渲染可选标签
+    renderAvailableTags();
+    
+    // 绑定标签输入事件
+    bindTagInputEvents();
+    
+    // 清空选中标签
+    goalTags.selectedTags = [];
+    renderSelectedTags();
+    
+    console.log('标签系统初始化完成');
+}
+
+// 渲染可选标签
+function renderAvailableTags() {
+    console.log('开始渲染可选标签...');
+    const container = document.getElementById('addGoalAvailableTags');
+    console.log('找到标签容器:', container);
+    if (!container) {
+        console.warn('addGoalAvailableTags元素未找到');
+        return;
+    }
+    
+    // 检查goalTags对象是否存在
+    if (!goalTags || !goalTags.defaultTags || !goalTags.customTags) {
+        console.error('goalTags对象未正确初始化');
+        return;
+    }
+    
+    const allTags = [...goalTags.defaultTags, ...goalTags.customTags];
+    console.log('所有标签:', allTags);
+    
+    container.innerHTML = allTags.map(tag => `
+        <span class="available-tag preset-tag" onclick="selectTag('${tag}')">${tag}</span>
+    `).join('');
+    
+    console.log('标签渲染完成，容器HTML:', container.innerHTML);
+}
+
+// 渲染已选择的标签
+function renderSelectedTags() {
+    const container = document.getElementById('addGoalSelectedTags');
+    if (!container) {
+        console.warn('addGoalSelectedTags元素未找到');
+        return;
+    }
+    
+    // 检查goalTags对象是否存在
+    if (!goalTags || !goalTags.selectedTags) {
+        console.error('goalTags.selectedTags未正确初始化');
+        return;
+    }
+    
+    container.innerHTML = goalTags.selectedTags.map(tag => {
+        // 生成颜色类名
+        let hash = 0;
+        for (let i = 0; i < tag.length; i++) {
+            const char = tag.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        const colorIndex = Math.abs(hash) % 11 + 1;
+        const colorClass = `tag-color-${colorIndex}`;
+        
+        return `
+            <span class="selected-tag ${colorClass}">
+                ${tag}
+                <button type="button" class="remove-tag-btn" onclick="removeTag('${tag}')">&times;</button>
+            </span>
+        `;
+    }).join('');
+}
+
+// 绑定标签输入事件
+function bindTagInputEvents() {
+    const tagInput = document.getElementById('addGoalTagInput');
+    const addTagBtn = document.getElementById('addGoalTagBtn');
+    
+    if (!tagInput) {
+        console.warn('addGoalTagInput元素未找到');
+        return;
+    }
+    
+    if (!addTagBtn) {
+        console.warn('addGoalTagBtn元素未找到');
+        return;
+    }
+    
+    // 添加标签按钮事件
+    addTagBtn.addEventListener('click', () => {
+        // 再次检查元素是否存在
+        if (!tagInput) {
+            console.warn('tagInput元素不存在');
+            return;
+        }
+        const tagText = tagInput.value.trim();
+        if (tagText) {
+            addCustomTag(tagText);
+            tagInput.value = '';
+        }
+    });
+    
+    // 回车键添加标签
+    tagInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // 再次检查元素是否存在
+             if (!tagInput) {
+                 console.warn('tagInput元素不存在');
+                 return;
+             }
+            const tagText = tagInput.value.trim();
+            if (tagText) {
+                addCustomTag(tagText);
+                tagInput.value = '';
+            }
+        }
+    });
+}
+
+// 选择标签
+function selectTag(tag) {
+    console.log('selectTag called with:', tag);
+    
+    // 确保goalTags和selectedTags存在
+    if (!goalTags) {
+        console.error('goalTags对象未定义');
+        return;
+    }
+    
+    if (!goalTags.selectedTags || !Array.isArray(goalTags.selectedTags)) {
+        goalTags.selectedTags = [];
+    }
+    
+    console.log('当前选中的标签:', goalTags.selectedTags);
+    
+    // 切换标签选中状态
+    const tagIndex = goalTags.selectedTags.indexOf(tag);
+    if (tagIndex > -1) {
+        // 如果已选中，则取消选中
+        goalTags.selectedTags.splice(tagIndex, 1);
+        console.log('取消选中标签:', tag);
+    } else {
+        // 如果未选中，则添加到选中列表
+        goalTags.selectedTags.push(tag);
+        console.log('选中标签:', tag);
+    }
+    
+    console.log('更新后选中的标签:', goalTags.selectedTags);
+    
+    // 更新标签样式
+    updateTagStyles();
+    
+    // 更新输入框
+    updateTagInput();
+    
+    // 渲染已选择的标签
+    renderSelectedTags();
+}
+
+// 移除标签
+function removeTag(tag) {
+    // 确保goalTags和selectedTags存在
+    if (!goalTags) {
+        console.error('goalTags对象未定义');
+        return;
+    }
+    
+    if (!goalTags.selectedTags || !Array.isArray(goalTags.selectedTags)) {
+        goalTags.selectedTags = [];
+        return;
+    }
+    
+    goalTags.selectedTags = goalTags.selectedTags.filter(t => t !== tag);
+    renderSelectedTags();
+}
+
+// 添加自定义标签
+function addCustomTag(tag) {
+    // 检查是否已存在
+    const allTags = [...goalTags.defaultTags, ...goalTags.customTags];
+    if (allTags.includes(tag)) {
+        // 如果标签已存在，直接选择它
+        selectTag(tag);
+        return;
+    }
+    
+    // 添加到自定义标签列表
+    goalTags.customTags.push(tag);
+    
+    // 保存到localStorage
+    localStorage.setItem('goalCustomTags', JSON.stringify(goalTags.customTags));
+    
+    // 重新渲染可选标签
+    renderAvailableTags();
+    
+    // 自动选择新添加的标签
+    selectTag(tag);
+}
+
+// 更新标签样式
+function updateTagStyles() {
+    const tagElements = document.querySelectorAll('.preset-tag');
+    tagElements.forEach(tagElement => {
+        const tagText = tagElement.textContent;
+        if (goalTags.selectedTags.includes(tagText)) {
+            tagElement.classList.add('selected');
+        } else {
+            tagElement.classList.remove('selected');
+        }
+    });
+}
+
+// 更新输入框
+function updateTagInput() {
+    const tagInput = document.getElementById('addGoalTags');
+    if (tagInput) {
+        tagInput.value = goalTags.selectedTags.join(', ');
+        console.log('输入框已更新:', tagInput.value);
+    } else {
+        console.error('未找到addGoalTags输入框');
+    }
+}
+
+// 获取当前选中的标签
+function getSelectedTags() {
+    // 检查goalTags对象是否存在
+    if (!goalTags) {
+        console.error('goalTags对象未定义，返回空数组');
+        return [];
+    }
+    
+    // 检查selectedTags属性是否存在
+    if (!goalTags.selectedTags || !Array.isArray(goalTags.selectedTags)) {
+        console.error('goalTags.selectedTags未正确初始化或不是数组，返回空数组');
+        goalTags.selectedTags = []; // 重新初始化为空数组
+        return [];
+    }
+    
+    return goalTags.selectedTags;
+}
+
+// 删除目标
+function deleteGoal(goalId) {
+    // 显示确认对话框
+    if (!confirm('确定要删除这个微观目标吗？删除后将无法恢复。')) {
+        return;
+    }
+    
+    try {
+        // 从localStorage中获取目标数据
+        const goals = JSON.parse(localStorage.getItem('gms_micro_goals') || '[]');
+        
+        // 查找要删除的目标
+        const goalIndex = goals.findIndex(goal => goal.goal_id === goalId);
+        if (goalIndex === -1) {
+            showMessage('目标不存在', 'error');
+            return;
+        }
+        
+        // 删除目标
+        goals.splice(goalIndex, 1);
+        
+        // 保存回localStorage
+        localStorage.setItem('gms_micro_goals', JSON.stringify(goals));
+        
+        // 刷新目标列表
+        renderGoalPanelList();
+        
+        // 如果在index.html页面，也刷新该页面的目标列表
+        if (typeof loadGoalsToContainer === 'function') {
+            loadGoalsToContainer();
+        }
+        
+        // 如果删除的是当前选中的目标，清空详情面板
+        if (selectedGoalId === goalId) {
+            selectedGoalId = null;
+            const goalDetailContent = document.getElementById('goalDetailContent');
+            const goalEmptyState = document.getElementById('goalEmptyState');
+            
+            if (goalDetailContent && goalEmptyState) {
+                goalDetailContent.style.display = 'none';
+                goalEmptyState.style.display = 'block';
+            }
+            
+            const selectedGoalName = document.getElementById('selectedGoalName');
+            if (selectedGoalName) {
+                selectedGoalName.textContent = '未选择目标';
+            }
+        }
+        
+        // 如果删除的目标是sessionStorage中保存的选中目标，清除记录
+        const sessionSelectedGoalId = sessionStorage.getItem('selectedGoalId');
+        if (sessionSelectedGoalId === goalId) {
+            sessionStorage.removeItem('selectedGoalId');
+            console.log('已清除sessionStorage中的选中目标记录:', goalId);
+        }
+        
+        showMessage('目标删除成功', 'success');
+        
+    } catch (error) {
+        console.error('删除目标时出错:', error);
+        showMessage('删除目标失败', 'error');
+    }
+}
+
+// 编辑目标
+function editGoal(goalId) {
+    const goals = getGoals();
+    const goal = goals.find(g => g.goal_id === goalId);
+    
+    if (!goal) {
+        showMessage('未找到指定的目标', 'error');
+        return;
+    }
+    
+    showEditGoalModal(goal);
+}
+
+// 显示编辑目标弹窗
+function showEditGoalModal(goal) {
+    // 先清理已存在的编辑弹窗
+    const existingModals = document.querySelectorAll('.goal-modal-overlay');
+    existingModals.forEach(modal => {
+        if (modal.querySelector('.goal-modal-header h3')?.textContent === '编辑目标') {
+            modal.remove();
+        }
+    });
+    
+    // 添加样式
+    addGoalModalStyles();
+    
+    // 创建弹窗HTML结构
+    const modal = document.createElement('div');
+    modal.className = 'goal-modal-overlay';
+    modal.innerHTML = `
+        <div class="goal-modal">
+            <div class="goal-modal-header">
+                <h3>编辑目标</h3>
+                <button class="goal-modal-close">&times;</button>
+            </div>
+            <div class="goal-modal-body" style="max-height: 70vh; overflow: auto; scrollbar-width: none; -ms-overflow-style: none;">
+                <style>
+                    .goal-modal-body::-webkit-scrollbar {
+                        display: none;
+                    }
+                </style>
+                <div class="add-goal-form">
+                    <div class="form-group">
+                        <label for="editGoalName">目标名称 <span class="required">*</span></label>
+                        <input type="text" id="editGoalName" class="form-input" value="${goal.title || ''}" placeholder="请输入目标名称" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editGoalDescription">目标描述</label>
+                        <textarea id="editGoalDescription" class="form-textarea" placeholder="请输入目标描述" rows="3">${goal.description || ''}</textarea>
+                    </div>
+                    
+                    <!-- 起始日期和截止日期并排显示 -->
+                    <div class="form-row">
+                        <div class="form-group form-group-half">
+                            <label for="editGoalStartDate">起始日期</label>
+                            <input type="date" id="editGoalStartDate" class="form-input" value="${goal.start_date || ''}">
+                        </div>
+                        
+                        <div class="form-group form-group-half">
+                            <label for="editGoalEndDate">截止日期</label>
+                            <input type="date" id="editGoalEndDate" class="form-input" value="${goal.end_date || ''}">
+                        </div>
+                    </div>
+                    
+
+                    
+                    <!-- 标签选择 -->
+                    <div class="form-group">
+                        <label for="editGoalTags">标签</label>
+                        <input type="text" id="editGoalTags" class="form-input" placeholder="选择标签..." readonly>
+                    </div>
+                    
+                    <!-- 预置标签选择容器 -->
+                    <div class="form-group">
+                        <label>选择标签</label>
+                        <div class="preset-tags-container" id="editPresetTagsContainer">
+                            <span class="preset-tag" data-tag="语文">语文</span>
+                            <span class="preset-tag" data-tag="数学">数学</span>
+                            <span class="preset-tag" data-tag="英语">英语</span>
+                            <span class="preset-tag" data-tag="科学">科学</span>
+                            <span class="preset-tag" data-tag="历史">历史</span>
+                            <span class="preset-tag" data-tag="地理">地理</span>
+                            <span class="preset-tag" data-tag="物理">物理</span>
+                            <span class="preset-tag" data-tag="化学">化学</span>
+                            <span class="preset-tag" data-tag="生物">生物</span>
+                            <span class="preset-tag" data-tag="编程">编程</span>
+                            <span class="preset-tag" data-tag="艺术">艺术</span>
+                            <span class="preset-tag" data-tag="体育">体育</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="goal-modal-footer">
+                <button class="goal-modal-btn cancel-btn" id="editGoalCancelBtn">取消</button>
+                <button class="goal-modal-btn save-btn" id="editGoalSaveBtn">保存</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 初始化编辑弹窗的标签系统
+    setTimeout(() => {
+        initEditGoalTags(goal.tags || []);
+    }, 0);
+    
+    // 绑定事件
+    const closeBtn = modal.querySelector('.goal-modal-close');
+    const cancelBtn = modal.querySelector('#editGoalCancelBtn');
+    const saveBtn = modal.querySelector('#editGoalSaveBtn');
+    const toggleSwitch = modal.querySelector('.toggle-switch-slider');
+    const toggleInput = modal.querySelector('#editGoalOptional');
+    
+    const closeModal = () => {
+        document.body.removeChild(modal);
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    // 添加滑块开关点击事件
+    if (toggleSwitch && toggleInput) {
+        toggleSwitch.addEventListener('click', () => {
+            toggleInput.checked = !toggleInput.checked;
+            updateEditToggleStyle(toggleInput, toggleSwitch);
+        });
+        
+        // 初始化滑块样式
+        updateEditToggleStyle(toggleInput, toggleSwitch);
+    }
+    
+    // 保存编辑
+    saveBtn.addEventListener('click', () => {
+        const titleElement = document.getElementById('editGoalName');
+        const descriptionElement = document.getElementById('editGoalDescription');
+        const tagsElement = document.getElementById('editGoalTags');
+        
+        if (!titleElement || !descriptionElement || !tagsElement) {
+            showMessage('表单元素加载错误，请刷新页面重试', 'error');
+            return;
+        }
+        
+        const title = titleElement.value.trim();
+        const description = descriptionElement.value.trim();
+        const tags = tagsElement.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+        
+        if (!title) {
+            showMessage('请输入目标名称', 'error');
+            return;
+        }
+        
+        // 更新目标数据
+        const goals = getGoals();
+        const goalIndex = goals.findIndex(g => g.goal_id === goal.goal_id);
+        
+        // 获取日期字段
+        const startDate = document.getElementById('editGoalStartDate')?.value || '';
+        const endDate = document.getElementById('editGoalEndDate')?.value || '';
+        
+        if (goalIndex !== -1) {
+            goals[goalIndex] = {
+                ...goals[goalIndex],
+                title: title,
+                description: description,
+                tags: tags,
+                start_date: startDate,
+                end_date: endDate
+            };
+            
+            saveGoals(goals);
+            
+            // 刷新目标列表显示
+            if (typeof loadGoalsToContainer === 'function') {
+                loadGoalsToContainer();
+            } else if (typeof renderGoalPanelList === 'function') {
+                renderGoalPanelList();
+            }
+            
+            closeModal();
+            showMessage('目标编辑成功', 'success');
+            
+            // 重新选中编辑的目标
+            setTimeout(() => {
+                if (typeof selectGoal === 'function') {
+                    selectGoal(goal.goal_id);
+                }
+            }, 100);
+        }
+    });
+    
+    // 点击遮罩关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+}
+
+// 编辑目标标签处理
+function initEditGoalTags(existingTags = []) {
+    const tagsInput = document.getElementById('editGoalTags');
+    const presetTagsContainer = document.getElementById('editPresetTagsContainer');
+    
+    if (!tagsInput || !presetTagsContainer) return;
+    
+    // 设置输入框的值
+    tagsInput.value = existingTags.join(', ');
+    
+    // 为预置标签添加点击事件
+    const presetTags = presetTagsContainer.querySelectorAll('.preset-tag');
+    presetTags.forEach(tag => {
+        const tagName = tag.getAttribute('data-tag');
+        
+        // 如果标签已存在，添加选中样式
+        if (existingTags.includes(tagName)) {
+            tag.classList.add('selected');
+        }
+        
+        tag.addEventListener('click', () => {
+            toggleEditTag(tagName, tag, tagsInput);
+        });
+    });
+}
+
+// 切换编辑标签选中状态
+function toggleEditTag(tagName, tagElement, tagsInput) {
+    const currentTags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    if (currentTags.includes(tagName)) {
+        // 移除标签
+        const newTags = currentTags.filter(tag => tag !== tagName);
+        tagsInput.value = newTags.join(', ');
+        tagElement.classList.remove('selected');
+    } else {
+        // 添加标签
+        currentTags.push(tagName);
+        tagsInput.value = currentTags.join(', ');
+        tagElement.classList.add('selected');
+    }
+}
+
+// 更新编辑弹窗滑块开关样式
+function updateEditToggleStyle(input, slider) {
+    // 直接通过CSS类来控制样式，让CSS的:checked伪类生效
+    if (input.checked) {
+        input.setAttribute('checked', 'checked');
+    } else {
+        input.removeAttribute('checked');
+    }
+    
+    // 触发重绘以确保CSS动画生效
+    slider.offsetHeight;
+}
+
+// ==================== 进程管理页面功能 ====================
+
+// 初始化维度标签功能
+function initializeDimensionTags() {
+    const dimensionTags = document.querySelectorAll('.dimension-tag');
+    
+    dimensionTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            // 切换选中状态
+            this.classList.toggle('selected');
+            
+            // 获取维度类型和值
+            const dimensionGroup = this.closest('.dimension-group');
+            const dimensionTitle = dimensionGroup ? dimensionGroup.querySelector('.dimension-title') : null;
+            const dimensionType = dimensionTitle ? dimensionTitle.textContent : '未知维度';
+            const dimensionValue = this.textContent;
+            
+            // 记录选中状态
+            const isSelected = this.classList.contains('selected');
+            console.log(`维度选择: ${dimensionType} - ${dimensionValue}`, isSelected ? '已选中' : '已取消');
+            
+            // 可以在这里添加更多的业务逻辑，比如保存到localStorage等
+            saveDimensionSelection();
+        });
+    });
+}
+
+// 保存维度选择状态
+function saveDimensionSelection() {
+    const selectedDimensions = {};
+    
+    document.querySelectorAll('.dimension-group').forEach(group => {
+        const titleElement = group.querySelector('.dimension-title');
+        const dimensionType = titleElement ? titleElement.textContent : '';
+        
+        const selectedTags = group.querySelectorAll('.dimension-tag.selected');
+        const selectedValues = Array.from(selectedTags).map(tag => tag.textContent);
+        
+        if (selectedValues.length > 0) {
+            selectedDimensions[dimensionType] = selectedValues;
+        }
+    });
+    
+    // 保存到localStorage
+    localStorage.setItem('gms_dimension_selection', JSON.stringify(selectedDimensions));
+}
+
+// 加载维度选择状态
+function loadDimensionSelection() {
+    try {
+        const savedSelection = localStorage.getItem('gms_dimension_selection');
+        if (!savedSelection) return;
+        
+        const selectedDimensions = JSON.parse(savedSelection);
+        
+        Object.keys(selectedDimensions).forEach(dimensionType => {
+            const values = selectedDimensions[dimensionType];
+            
+            document.querySelectorAll('.dimension-group').forEach(group => {
+                const titleElement = group.querySelector('.dimension-title');
+                if (titleElement && titleElement.textContent === dimensionType) {
+                    values.forEach(value => {
+                        const tag = Array.from(group.querySelectorAll('.dimension-tag'))
+                            .find(tag => tag.textContent === value);
+                        if (tag) {
+                            tag.classList.add('selected');
+                        }
+                    });
+                }
+            });
+        });
+    } catch (error) {
+        console.error('加载维度选择状态失败:', error);
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded事件触发，gms.js正在执行');
+    // 检查是否在进程管理页面
+    const processPanel = document.getElementById('process-panel');
+    if (processPanel && processPanel.style.display !== 'none') {
+        initializeDimensionTags();
+        loadDimensionSelection();
+    }
+});
+
+// 监听页面切换，当切换到进程管理页面时初始化
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            const target = mutation.target;
+            if (target.id === 'process-panel' && target.style.display === 'block') {
+                setTimeout(() => {
+                    initializeDimensionTags();
+                    loadDimensionSelection();
+                }, 100);
+            }
+        }
+    });
+});
+
+// 开始观察进程管理面板的显示状态变化
+const processPanel = document.getElementById('process-panel');
+if (processPanel) {
+    observer.observe(processPanel, {
+        attributes: true,
+        attributeFilter: ['style']
+    });
+}
+
+// ==================== 回到顶部按钮功能 ====================
+
+// 初始化回到顶部按钮功能
+function initBackToTopButton() {
+    const backToTopBtn = document.getElementById('backToTopBtn');
+    const relatedTasksContainer = document.getElementById('relatedTasksContainer');
+    
+    if (!backToTopBtn || !relatedTasksContainer) {
+        return;
+    }
+    
+    // 初始状态隐藏按钮
+    backToTopBtn.style.opacity = '0';
+    backToTopBtn.style.visibility = 'hidden';
+    
+    // 点击事件：滚动到顶部
+    backToTopBtn.addEventListener('click', function() {
+        relatedTasksContainer.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+    
+    // 滚动事件：控制按钮显示/隐藏
+    relatedTasksContainer.addEventListener('scroll', function() {
+        const scrollTop = relatedTasksContainer.scrollTop;
+        
+        if (scrollTop > 100) {
+            // 显示按钮
+            backToTopBtn.style.opacity = '1';
+            backToTopBtn.style.visibility = 'visible';
+        } else {
+            // 隐藏按钮
+            backToTopBtn.style.opacity = '0';
+            backToTopBtn.style.visibility = 'hidden';
+        }
+    });
+}
+
+// 页面加载完成后初始化回到顶部按钮
+document.addEventListener('DOMContentLoaded', function() {
+    initBackToTopButton();
+});
+
+// 如果页面已经加载完成，立即初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBackToTopButton);
+} else {
+    initBackToTopButton();
+}
+
+// ==================== 学习资源表格功能 ====================
+
+// 学习资源数据管理
+class LearningResourcesManager {
+    constructor() {
+        this.storageKey = 'gms_learning_resources';
+        this.currentEditingCell = null;
+        this.init();
+    }
+
+    // 初始化
+    init() {
+        this.loadResources();
+        this.bindEvents();
+        this.renderTable();
+    }
+
+    // 从localStorage加载数据
+    loadResources() {
+        try {
+            const data = localStorage.getItem(this.storageKey);
+            this.resources = data ? JSON.parse(data) : [];
+        } catch (error) {
+            console.error('加载学习资源数据失败:', error);
+            this.resources = [];
+        }
+    }
+
+    // 保存数据到localStorage
+    saveResources() {
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(this.resources));
+        } catch (error) {
+            console.error('保存学习资源数据失败:', error);
+        }
+    }
+
+    // 绑定事件
+    bindEvents() {
+        // 添加行按钮
+        const addRowBtn = document.querySelector('.add-row-btn');
+        if (addRowBtn) {
+            addRowBtn.addEventListener('click', () => this.addRow());
+        }
+
+        // 删除空行按钮
+        const deleteRowBtn = document.querySelector('.delete-row-btn');
+        if (deleteRowBtn) {
+            deleteRowBtn.addEventListener('click', () => this.deleteEmptyRows());
+        }
+
+        // 编辑弹窗相关事件
+        this.bindModalEvents();
+    }
+
+    // 绑定弹窗事件
+    bindModalEvents() {
+        const modal = document.getElementById('editModal');
+        const closeBtn = modal?.querySelector('.close-btn');
+        const cancelBtn = modal?.querySelector('.cancel-btn');
+        const saveBtn = modal?.querySelector('.save-btn');
+
+        // 关闭弹窗
+        [closeBtn, cancelBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => this.closeModal());
+            }
+        });
+
+        // 点击背景关闭弹窗
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeModal();
+                }
+            });
+        }
+
+        // 保存按钮
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveResource());
+        }
+
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal?.style.display === 'flex') {
+                this.closeModal();
+            }
+        });
+    }
+
+    // 渲染表格
+    renderTable() {
+        const tbody = document.querySelector('.resources-table tbody');
+        if (!tbody) return;
+
+        // 确保至少有一行
+        if (this.resources.length === 0) {
+            this.resources.push(new Array(6).fill(null));
+        }
+
+        tbody.innerHTML = '';
+
+        this.resources.forEach((row, rowIndex) => {
+            const tr = document.createElement('tr');
+            
+            for (let colIndex = 0; colIndex < 6; colIndex++) {
+                const td = document.createElement('td');
+                td.className = 'resource-cell';
+                
+                const resource = row[colIndex];
+                
+                if (resource && resource.title) {
+                    // 有内容的单元格
+                    td.classList.add('has-content');
+                    td.innerHTML = `
+                        <a href="#" class="resource-title" data-url="${resource.url || ''}">${resource.title}</a>
+                        <div class="cell-actions">
+                            <button class="action-btn edit-btn" title="编辑">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete-btn" title="删除">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,6 5,6 21,6"/>
+                                    <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+
+                    // 绑定链接点击事件
+                    const link = td.querySelector('.resource-title');
+                    if (link) {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.openResource(resource.url);
+                        });
+                    }
+
+                    // 为有内容的单元格添加整体点击事件
+                    td.addEventListener('click', (e) => {
+                        // 如果点击的不是编辑或删除按钮区域，则执行链接跳转
+                        if (!e.target.closest('.cell-actions')) {
+                            this.openResource(resource.url);
+                        }
+                    });
+                } else {
+                    // 空单元格
+                    td.innerHTML = `
+                        <span class="empty-cell-hint">点击添加</span>
+                        <div class="cell-actions">
+                            <button class="action-btn edit-btn" title="添加">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // 绑定单元格点击事件（只对空单元格生效）
+                if (!resource || !resource.title) {
+                    td.addEventListener('click', (e) => {
+                        if (!e.target.closest('.cell-actions')) {
+                            this.editResource(rowIndex, colIndex);
+                        }
+                    });
+                }
+
+                // 绑定编辑按钮事件
+                const editBtn = td.querySelector('.edit-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.editResource(rowIndex, colIndex);
+                    });
+                }
+
+                // 绑定删除按钮事件
+                const deleteBtn = td.querySelector('.delete-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.deleteResource(rowIndex, colIndex);
+                    });
+                }
+
+                tr.appendChild(td);
+            }
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 打开资源链接
+    openResource(url) {
+        if (!url) return;
+
+        // 检查是否是外部链接
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            // 外部链接，在新窗口打开
+            window.open(url, '_blank');
+            return;
+        }
+
+        // 检查是否是本地文件
+        const localFileExtensions = ['html', 'htm', 'jpg', 'jpeg', 'png', 'pdf', 'txt', 'doc', 'docx'];
+        const extension = url.split('.').pop()?.toLowerCase();
+
+        if (localFileExtensions.includes(extension)) {
+            // 本地文件，构建相对于当前页面的完整路径
+            let fullUrl = url;
+            
+            // 如果不是以 / 开头的绝对路径，则视为相对路径
+            if (!url.startsWith('/') && !url.includes('://')) {
+                // 获取当前页面的基础路径
+                const currentPath = window.location.pathname;
+                const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                fullUrl = basePath + url;
+            }
+            
+            // 在新窗口打开
+            window.open(fullUrl, '_blank');
+        } else {
+            // 其他情况，直接尝试打开
+            window.open(url, '_blank');
+        }
+    }
+
+    // 编辑资源
+    editResource(rowIndex, colIndex) {
+        this.currentEditingCell = { rowIndex, colIndex };
+        
+        const resource = this.resources[rowIndex]?.[colIndex];
+        
+        // 填充表单
+        const titleInput = document.getElementById('resourceTitle');
+        const urlInput = document.getElementById('resourceLink');
+        
+        if (titleInput) titleInput.value = resource?.title || '';
+        if (urlInput) urlInput.value = resource?.url || '';
+
+        // 显示弹窗
+        this.showModal();
+    }
+
+    // 删除资源
+    deleteResource(rowIndex, colIndex) {
+        if (confirm('确定要删除这个资源吗？')) {
+            if (!this.resources[rowIndex]) {
+                this.resources[rowIndex] = new Array(6).fill(null);
+            }
+            this.resources[rowIndex][colIndex] = null;
+            this.saveResources();
+            this.renderTable();
+        }
+    }
+
+    // 保存资源
+    saveResource() {
+        if (!this.currentEditingCell) return;
+
+        const { rowIndex, colIndex } = this.currentEditingCell;
+        const titleInput = document.getElementById('resourceTitle');
+        const urlInput = document.getElementById('resourceLink');
+
+        const title = titleInput?.value.trim();
+        const url = urlInput?.value.trim();
+
+        if (!title) {
+            alert('请输入资源标题');
+            return;
+        }
+
+        // 验证URL格式
+        if (url && !this.isValidUrl(url)) {
+            alert('请输入有效的URL或本地文件名（支持html、jpg、jpeg、png、pdf格式）');
+            return;
+        }
+
+        // 确保行存在
+        if (!this.resources[rowIndex]) {
+            this.resources[rowIndex] = new Array(6).fill(null);
+        }
+
+        // 保存数据
+        this.resources[rowIndex][colIndex] = {
+            title: title,
+            url: url || ''
+        };
+
+        this.saveResources();
+        this.renderTable();
+        this.closeModal();
+    }
+
+    // 验证URL格式
+    isValidUrl(url) {
+        // 外部链接
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        // 本地文件
+        const localFileExtensions = ['html', 'jpg', 'jpeg', 'png', 'pdf'];
+        const extension = url.split('.').pop()?.toLowerCase();
+        return localFileExtensions.includes(extension);
+    }
+
+    // 显示弹窗
+    showModal() {
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            // 聚焦到标题输入框
+            const titleInput = document.getElementById('resourceTitle');
+            if (titleInput) {
+                setTimeout(() => titleInput.focus(), 100);
+            }
+        }
+    }
+
+    // 关闭弹窗
+    closeModal() {
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.currentEditingCell = null;
+    }
+
+    // 添加行
+    addRow() {
+        this.resources.push(new Array(6).fill(null));
+        this.saveResources();
+        this.renderTable();
+    }
+
+    // 删除空行
+    deleteEmptyRows() {
+        const originalLength = this.resources.length;
+        
+        // 过滤掉完全为空的行
+        this.resources = this.resources.filter(row => {
+            return row.some(cell => cell && cell.title);
+        });
+
+        // 确保至少保留一行
+        if (this.resources.length === 0) {
+            this.resources.push(new Array(6).fill(null));
+        }
+
+        const deletedCount = originalLength - this.resources.length;
+        if (deletedCount > 0) {
+            alert(`已删除 ${deletedCount} 个空行`);
+            this.saveResources();
+            this.renderTable();
+        } else {
+            alert('没有找到可删除的空行');
+        }
+    }
+}
+
+// 初始化学习资源管理器
+let learningResourcesManager = null;
+
+// 初始化学习资源功能
+function initLearningResources() {
+    // 检查是否在学习资源页面
+    const learningResourcesPanel = document.getElementById('learning-resources-panel');
+    if (learningResourcesPanel && learningResourcesPanel.classList.contains('active')) {
+        if (!learningResourcesManager) {
+            learningResourcesManager = new LearningResourcesManager();
+        }
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟初始化，确保DOM完全加载
+    setTimeout(() => {
+        initLearningResources();
+    }, 100);
+});
+
+// 监听页面切换，当切换到学习资源页面时初始化
+const learningResourcesObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const target = mutation.target;
+            if (target.id === 'learning-resources-panel' && target.classList.contains('active')) {
+                setTimeout(() => {
+                    initLearningResources();
+                }, 100);
+            }
+        }
+    });
+});
+
+// 开始观察学习资源面板的激活状态变化
+const learningResourcesPanel = document.getElementById('learning-resources-panel');
+if (learningResourcesPanel) {
+    learningResourcesObserver.observe(learningResourcesPanel, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+}
