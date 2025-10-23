@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学培优S创新班目录打卡系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .filter-section {
+            margin-bottom: 15px;
+        }
+        
+        .filter-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .filter-tag {
+            background-color: #f0f4ff;
+            border: 1px solid #d0d8f0;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-tag:hover {
+            background-color: #e1e8ff;
+        }
+        
+        .filter-tag.active {
+            background-color: #4a6ee0;
+            color: white;
+            border-color: #4a6ee0;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .search-button {
+            background-color: #4a6ee0;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background-color: #f0f4ff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .courses-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .course-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .course-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .course-card.completed {
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .course-card.in-progress {
+            border-left: 4px solid #FFC107;
+        }
+        
+        .course-code {
+            font-weight: bold;
+            color: #4a6ee0;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .course-name {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .course-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-in-progress {
+            background-color: #fff8e1;
+            color: #f57c00;
+        }
+        
+        .status-not-started {
+            background-color: #f5f5f5;
+            color: #757575;
+        }
+        
+        .completion-date {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .status-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .status-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .start-btn {
+            background-color: #e1e8ff;
+            color: #4a6ee0;
+        }
+        
+        .start-btn:hover {
+            background-color: #d0d8f0;
+        }
+        
+        .complete-btn {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .complete-btn:hover {
+            background-color: #d7e6d9;
+        }
+        
+        .reset-btn {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .reset-btn:hover {
+            background-color: #ffcdd2;
+        }
+        
+        .no-courses {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .courses-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>数学培优S创新班目录打卡系统</h1>
+            <div class="subtitle">跟踪您的学习进度，记录完成情况</div>
+        </header>
+        
+        <div class="controls">
+            <div class="filter-section">
+                <div class="filter-title">年级筛选</div>
+                <div class="filter-tags" id="grade-tags">
+                    <div class="filter-tag active" data-value="all">全部年级</div>
+                    <div class="filter-tag" data-value="1">一年级</div>
+                    <div class="filter-tag" data-value="2">二年级</div>
+                    <div class="filter-tag" data-value="3">三年级</div>
+                    <div class="filter-tag" data-value="4">四年级</div>
+                    <div class="filter-tag" data-value="5">五年级</div>
+                    <div class="filter-tag" data-value="6">六年级</div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">学期筛选</div>
+                <div class="filter-tags" id="term-tags">
+                    <div class="filter-tag active" data-value="all">全部学期</div>
+                    <div class="filter-tag" data-value="暑">暑假</div>
+                    <div class="filter-tag" data-value="秋">秋季</div>
+                    <div class="filter-tag" data-value="寒">寒假</div>
+                    <div class="filter-tag" data-value="春">春季</div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">状态筛选</div>
+                <div class="filter-tags" id="status-tags">
+                    <div class="filter-tag active" data-value="all">全部状态</div>
+                    <div class="filter-tag" data-value="completed">已完成</div>
+                    <div class="filter-tag" data-value="in-progress">进行中</div>
+                    <div class="filter-tag" data-value="not-started">未开始</div>
+                </div>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" class="search-input" id="search-input" placeholder="搜索课程名称或代码...">
+                <button class="search-button" id="search-button">搜索</button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">总计: <span id="total-count">0</span></div>
+                <div class="stat-item">已完成: <span id="completed-count">0</span></div>
+                <div class="stat-item">进行中: <span id="inprogress-count">0</span></div>
+                <div class="stat-item">进度: <span id="progress-percent">0%</span></div>
+            </div>
+        </div>
+        
+        <div class="courses-container" id="courses-container">
+            <!-- 课程卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 课程数据
+        const courseData = {
+            "暑": {
+                "1": [
+                    { code: "暑S01", name: "数的组成和比较" },
+                    { code: "暑S02", name: "线角初步" },
+                    { code: "暑S03", name: "突破进退位加减法" },
+                    { code: "暑S04", name: "排列中的枚举" },
+                    { code: "暑S05", name: "数方" },
+                    { code: "暑S06", name: "立体图形和展开图" },
+                    { code: "暑S07", name: "对称之美" },
+                    { code: "暑S08", name: "时间的认识" },
+                    { code: "暑S09", name: "看图列式" },
+                    { code: "暑S10", name: "方向与位置" }
+                ],
+                "2": [
+                    { code: "暑S01", name: "组数中的枚举" },
+                    { code: "暑S02", name: "表内乘法" },
+                    { code: "暑S03", name: "巧用乘法数图形" },
+                    { code: "暑S04", name: "搭配中的枚举" },
+                    { code: "暑S05", name: "加减巧算综合" },
+                    { code: "暑S06", name: "华容道" },
+                    { code: "暑S07", name: "图形拼接" },
+                    { code: "暑S08", name: "四则运算初步" },
+                    { code: "暑S09", name: "火柴棒与数" },
+                    { code: "暑S10", name: "图文算式进阶" }
+                ],
+                "3": [
+                    { code: "暑S01", name: "巧求周长（一）" },
+                    { code: "暑S02", name: "字典排列法" },
+                    { code: "暑S03", name: "加减法数字谜" },
+                    { code: "暑S04", name: "乘法竖式" },
+                    { code: "暑S05", name: "除法竖式" },
+                    { code: "暑S06", name: "归一问题" },
+                    { code: "暑S07", name: "平均数初步" },
+                    { code: "暑S08", name: "分数认识初步" },
+                    { code: "暑S09", name: "植树问题进阶" },
+                    { code: "暑S10", name: "扫雷与搭帐篷" }
+                ],
+                "4": [
+                    { code: "暑S01", name: "小数加法巧算" },
+                    { code: "暑S02", name: "鸡兔同笼初步" },
+                    { code: "暑S03", name: "简易方程" },
+                    { code: "暑S04", name: "方程解应用题" },
+                    { code: "暑S05", name: "平行四边形与梯形" },
+                    { code: "暑S06", name: "相遇问题" },
+                    { code: "暑S07", name: "追及问题" },
+                    { code: "暑S08", name: "三角形初步" },
+                    { code: "暑S09", name: "三角形进阶" },
+                    { code: "暑S10", name: "倒序求和进阶" }
+                ],
+                "5": [
+                    { code: "暑S01", name: "勾股定理" },
+                    { code: "暑S02", name: "容斥原理" },
+                    { code: "暑S03", name: "火车过桥" },
+                    { code: "暑S04", name: "质数合数" },
+                    { code: "暑S05", name: "分解质因数" },
+                    { code: "暑S06", name: "公因数公倍数" },
+                    { code: "暑S07", name: "因数个数定理" },
+                    { code: "暑S08", name: "分数加减" },
+                    { code: "暑S09", name: "分数乘除" },
+                    { code: "暑S10", name: "方程与方程组" },
+                    { code: "暑S11", name: "分数应用题" },
+                    { code: "暑S12", name: "比和比例" },
+                    { code: "暑S13", name: "短除模型" },
+                    { code: "暑S14", name: "神奇的9" },
+                    { code: "暑S15", name: "共角三角形" }
+                ],
+                "6": [
+                    { code: "暑S01", name: "分小四则混合运算" },
+                    { code: "暑S02", name: "公式类计算" },
+                    { code: "暑S03", name: "浓度问题" },
+                    { code: "暑S04", name: "经济问题" },
+                    { code: "暑S05", name: "等积变形与一半模型" },
+                    { code: "暑S06", name: "公因数公倍数" },
+                    { code: "暑S07", name: "比例模型" },
+                    { code: "暑S08", name: "整除与位置" },
+                    { code: "暑S09", name: "分数比例应用题" },
+                    { code: "暑S10", name: "专题行程（上）" },
+                    { code: "暑S11", name: "专题行程（下）" },
+                    { code: "暑S12", name: "计数方法综合" },
+                    { code: "暑S13", name: "行程方法综合" },
+                    { code: "暑S14", name: "因倍质合（上）" },
+                    { code: "暑S15", name: "因倍质合（下）" }
+                ]
+            },
+            "秋": {
+                "1": [
+                    { code: "秋S01", name: "图形规律初步" },
+                    { code: "秋S02", name: "加减巧算初步" },
+                    { code: "秋S03", name: "平面图形计数初步" },
+                    { code: "秋S04", name: "加减应用题" },
+                    { code: "秋S05", name: "立体图形计数" },
+                    { code: "秋S06", name: "火柴棒与图形" },
+                    { code: "秋S07", name: "数串规律初步" },
+                    { code: "秋S08", name: "天平代换" },
+                    { code: "秋S09", name: "中奖的可能性" },
+                    { code: "秋S10", name: "立体七巧板运动" },
+                    { code: "秋S11", name: "立体七巧板双拼" },
+                    { code: "秋S12", name: "排队问题初步" },
+                    { code: "秋S13", name: "数织" },
+                    { code: "秋S14", name: "比多比少应用题" },
+                    { code: "秋S15", name: "横式数字谜" },
+                    { code: "秋S16", name: "榫卯" }
+                ],
+                "2": [
+                    { code: "秋S01", name: "图形规律" },
+                    { code: "秋S02", name: "趣味数串速算" },
+                    { code: "秋S03", name: "平面图形计数进阶" },
+                    { code: "秋S04", name: "一笔画问题" },
+                    { code: "秋S05", name: "种树游戏" },
+                    { code: "秋S06", name: "表内除法" },
+                    { code: "秋S07", name: "乘法算式计算初步" },
+                    { code: "秋S08", name: "数串规律进阶" },
+                    { code: "秋S09", name: "翻杯子" },
+                    { code: "秋S10", name: "还原问题进阶" },
+                    { code: "秋S11", name: "巧填算符进阶" },
+                    { code: "秋S12", name: "排队问题进阶" },
+                    { code: "秋S13", name: "立体七巧板多拼" },
+                    { code: "秋S14", name: "立体七巧板拼切" },
+                    { code: "秋S15", name: "四则运算综合运用" },
+                    { code: "秋S16", name: "倒油取水" }
+                ],
+                "3": [
+                    { code: "秋S01", name: "从数形图谈起" },
+                    { code: "秋S02", name: "周期问题" },
+                    { code: "秋S03", name: "奇数和偶数" },
+                    { code: "秋S04", name: "乘法巧算" },
+                    { code: "秋S05", name: "除法巧算" },
+                    { code: "秋S06", name: "长方形与正方形" },
+                    { code: "秋S07", name: "和倍问题" },
+                    { code: "秋S08", name: "差倍问题" },
+                    { code: "秋S09", name: "日期中的周期" },
+                    { code: "秋S10", name: "幻方" },
+                    { code: "秋S11", name: "统计问题" },
+                    { code: "秋S12", name: "多笔画问题" },
+                    { code: "秋S13", name: "鸡兔同笼初步" },
+                    { code: "秋S14", name: "包含与排除" },
+                    { code: "秋S15", name: "倒推与图示" },
+                    { code: "秋S16", name: "数独" }
+                ],
+                "4": [
+                    { code: "秋S01", name: "巧求面积" },
+                    { code: "秋S02", name: "体育比赛中的数学" },
+                    { code: "秋S03", name: "进位制初步" },
+                    { code: "秋S04", name: "加乘原理进阶" },
+                    { code: "秋S05", name: "小数乘除" },
+                    { code: "秋S06", name: "行程问题进阶" },
+                    { code: "秋S07", name: "操作类智巧趣题" },
+                    { code: "秋S08", name: "格点与割补" },
+                    { code: "秋S09", name: "整除特征初步" },
+                    { code: "秋S10", name: "最值问题初步" },
+                    { code: "秋S11", name: "最不利原则" },
+                    { code: "秋S12", name: "鸡兔同笼进阶" },
+                    { code: "秋S13", name: "平均数进阶" },
+                    { code: "秋S14", name: "乘除法数学谜" },
+                    { code: "秋S15", name: "火车过桥" }
+                ],
+                "5": [
+                    { code: "秋S01", name: "循环小数" },
+                    { code: "秋S02", name: "相同的余数" },
+                    { code: "秋S03", name: "排列组合" },
+                    { code: "秋S04", name: "染色与覆盖" },
+                    { code: "秋S05", name: "分小混合" },
+                    { code: "秋S06", name: "比较与估算" },
+                    { code: "秋S07", name: "四边形中的面积关系" },
+                    { code: "秋S08", name: "共边三角形" },
+                    { code: "秋S09", name: "计数综合" },
+                    { code: "秋S10", name: "扶梯与发车" },
+                    { code: "秋S11", name: "不定方程" },
+                    { code: "秋S12", name: "方程法解行程" },
+                    { code: "秋S13", name: "工程问题" },
+                    { code: "秋S14", name: "比例法解行程" },
+                    { code: "秋S15", name: "长方体与正方体" }
+                ],
+                "6": [
+                    { code: "秋S01", name: "分数裂项与分拆" },
+                    { code: "秋S02", name: "整数裂项与通项归纳" },
+                    { code: "秋S03", name: "特殊图形" },
+                    { code: "秋S04", name: "消点法" },
+                    { code: "秋S05", name: "工程问题综合" },
+                    { code: "秋S06", name: "神秘的金字塔" },
+                    { code: "秋S07", name: "余数问题上" },
+                    { code: "秋S08", name: "余数问题下" },
+                    { code: "秋S09", name: "递推与归纳" },
+                    { code: "秋S10", name: "行程综合" },
+                    { code: "秋S11", name: "数字谜综合" },
+                    { code: "秋S12", name: "构造论证（上）" },
+                    { code: "秋S13", name: "曲线几何" },
+                    { code: "秋S14", name: "图解行程" },
+                    { code: "秋S15", name: "最值问题综合" },
+                    { code: "秋S16", name: "如何测量残弧" }
+                ]
+            },
+            "寒": {
+                "1": [
+                    { code: "寒S01", name: "加减法竖式" },
+                    { code: "寒S02", name: "算式中的代换" },
+                    { code: "寒S03", name: "巧填数与算符" },
+                    { code: "寒S04", name: "图形叠加组合" },
+                    { code: "寒S05", name: "移多补少初步" },
+                    { code: "寒S06", name: "空瓶换酒与错式正解" },
+                    { code: "寒S07", name: "三色图形推理" }
+                ],
+                "2": [
+                    { code: "寒S01", name: "认识倍" },
+                    { code: "寒S02", name: "带余除法" },
+                    { code: "寒S03", name: "图形等分进阶" },
+                    { code: "寒S04", name: "有趣的自然数串" },
+                    { code: "寒S05", name: "枚举法综合" },
+                    { code: "寒S06", name: "三不连谜题" },
+                    { code: "寒S07", name: "除法竖式初步" }
+                ],
+                "3": [
+                    { code: "寒S01", name: "小数的认识" },
+                    { code: "寒S02", name: "线与角" },
+                    { code: "寒S03", name: "图形计数初步" },
+                    { code: "寒S04", name: "年龄问题" },
+                    { code: "寒S05", name: "字母表示数" },
+                    { code: "寒S06", name: "倒序求和初步" },
+                    { code: "寒S07", name: "方阵" }
+                ],
+                "4": [
+                    { code: "寒S01", name: "小数计算综合" },
+                    { code: "寒S02", name: "图形的分割与拼接" },
+                    { code: "寒S03", name: "环形跑道" },
+                    { code: "寒S04", name: "数形结合" },
+                    { code: "寒S05", name: "长方形数表" },
+                    { code: "寒S06", name: "整除特征进阶" },
+                    { code: "寒S07", name: "逻辑推理" }
+                ],
+                "5": [
+                    { code: "寒S01", name: "立体图形与空间想象" },
+                    { code: "寒S02", name: "切片与染色" },
+                    { code: "寒S03", name: "三角形数表" },
+                    { code: "寒S04", name: "时钟问题" },
+                    { code: "寒S05", name: "位值原理" },
+                    { code: "寒S06", name: "进位制进阶" },
+                    { code: "寒S07", name: "圆与扇形初步" }
+                ],
+                "6": [
+                    { code: "寒S01", name: "数表综合" },
+                    { code: "寒S02", name: "进位制综合" },
+                    { code: "寒S03", name: "立体图形体积综合" },
+                    { code: "寒S04", name: "立体图形表面积综合" },
+                    { code: "寒S05", name: "几何计数综合" },
+                    { code: "寒S06", name: "应用题综合" },
+                    { code: "寒S07", name: "构造论证（下）" }
+                ]
+            },
+            "春": {
+                "1": [
+                    { code: "春S01", name: "正方体拆一拆" },
+                    { code: "春S02", name: "加减法巧算进阶" },
+                    { code: "春S03", name: "迷宫连线" },
+                    { code: "春S04", name: "单数与双数初步" },
+                    { code: "春S05", name: "还原问题初步" },
+                    { code: "春S06", name: "逻辑推理初步" },
+                    { code: "春S07", name: "理财小能手" },
+                    { code: "春S08", name: "竖式数学米" },
+                    { code: "春S09", name: "认识骰子" },
+                    { code: "春S10", name: "数阵图初步" },
+                    { code: "春S11", name: "拆数中的枚举" },
+                    { code: "春S12", name: "旋转之美" },
+                    { code: "春S13", name: "时间的计算" },
+                    { code: "春S14", name: "间隔的秘密" },
+                    { code: "春S15", name: "斜天平巧推理" },
+                    { code: "春S16", name: "帽子的奥秘" }
+                ],
+                "2": [
+                    { code: "春S01", name: "立体染色问题" },
+                    { code: "春S02", name: "变加为乘速算" },
+                    { code: "春S03", name: "周期问题初步" },
+                    { code: "春S04", name: "过桥过河" },
+                    { code: "春S05", name: "重叠问题" },
+                    { code: "春S06", name: "植树问题" },
+                    { code: "春S07", name: "逻辑推理进阶" },
+                    { code: "春S08", name: "移多补少进阶" },
+                    { code: "春S09", name: "数阵图进阶" },
+                    { code: "春S10", name: "和差问题" },
+                    { code: "春S11", name: "多角度观察" },
+                    { code: "春S12", name: "年龄问题初步" },
+                    { code: "春S13", name: "蜗牛爬井" },
+                    { code: "春S14", name: "线段图综合" },
+                    { code: "春S15", name: "必胜策略初步" },
+                    { code: "春S16", name: "数墙" }
+                ],
+                "3": [
+                    { code: "春S01", name: "桥填算符" },
+                    { code: "春S02", name: "标数法" },
+                    { code: "春S03", name: "盈亏问题" },
+                    { code: "春S04", name: "整数分拆" },
+                    { code: "春S05", name: "整数巧算" },
+                    { code: "春S06", name: "巧求周长（二）" },
+                    { code: "春S07", name: "和差倍综合" },
+                    { code: "春S08", name: "加乘原理初步" },
+                    { code: "春S09", name: "带余除法" },
+                    { code: "春S10", name: "平行四边形与梯形初步" },
+                    { code: "春S11", name: "平行四边形与梯形进阶" },
+                    { code: "春S12", name: "图形计数进阶" },
+                    { code: "春S13", name: "统筹与最优化" },
+                    { code: "春S14", name: "页码问题" },
+                    { code: "春S15", name: "行程问题" }
+                ],
+                "4": [
+                    { code: "春S01", name: "多位数计算" },
+                    { code: "春S02", name: "等积变形" },
+                    { code: "春S03", name: "一半模型" },
+                    { code: "春S04", name: "方程与方程组" },
+                    { code: "春S05", name: "牛吃草问题" },
+                    { code: "春S06", name: "必胜策略" },
+                    { code: "春S07", name: "图形的对称" },
+                    { code: "春S08", name: "平移与旋转" },
+                    { code: "春S09", name: "流水行船" },
+                    { code: "春S10", name: "递推计数" },
+                    { code: "春S11", name: "因倍质和（一）" },
+                    { code: "春S12", name: "分解质因数" },
+                    { code: "春S13", name: "因倍质和（二）" },
+                    { code: "春S14", name: "分数认识初阶" }
+                ],
+                "5": [
+                    { code: "春S01", name: "分数裂项" },
+                    { code: "春S02", name: "整数裂项与通项归纳" },
+                    { code: "春S03", name: "水中浸物" },
+                    { code: "春S04", name: "剩余问题" },
+                    { code: "春S05", name: "梯形中的面积关系" },
+                    { code: "春S06", name: "圆与扇形进阶" },
+                    { code: "春S07", name: "浓度问题" },
+                    { code: "春S08", name: "经济问题" },
+                    { code: "春S09", name: "正多边形" },
+                    { code: "春S10", name: "圆柱与圆锥" },
+                    { code: "春S11", name: "接送问题" },
+                    { code: "春S12", name: "多次相遇与追及" },
+                    { code: "春S13", name: "统计与可能性" },
+                    { code: "春S14", name: "旋转与轨迹" },
+                    { code: "春S15", name: "完全平方数" },
+                    { code: "春S16", name: "高斯记号" }
+                ],
+                "6": [
+                    { code: "春S01", name: "运算求解能力提升" },
+                    { code: "春S02", name: "实践应用能力提升（一）" },
+                    { code: "春S03", name: "图形认知能力提升" },
+                    { code: "春S04", name: "抽象概括能力提升" },
+                    { code: "春S05", name: "逻辑分析能力提升" },
+                    { code: "春S06", name: "实践应用能力提升（二）" },
+                    { code: "春S07", name: "数与式" },
+                    { code: "春S08", name: "三角形综合" },
+                    { code: "春S09", name: "线与角" },
+                    { code: "春S10", name: "阅读理解" }
+                ]
+            }
+        };
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // 加载保存的进度
+            loadProgress();
+            
+            // 渲染课程
+            renderCourses();
+            
+            // 添加事件监听器
+            document.getElementById('search-button').addEventListener('click', renderCourses);
+            document.getElementById('search-input').addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    renderCourses();
+                }
+            });
+            
+            // 为筛选标签添加点击事件
+            setupFilterTags('grade-tags');
+            setupFilterTags('term-tags');
+            setupFilterTags('status-tags');
+        }
+
+        // 设置筛选标签
+        function setupFilterTags(containerId) {
+            const container = document.getElementById(containerId);
+            container.addEventListener('click', function(event) {
+                if (event.target.classList.contains('filter-tag')) {
+                    // 移除所有同级标签的active类
+                    Array.from(container.children).forEach(tag => {
+                        tag.classList.remove('active');
+                    });
+                    
+                    // 为点击的标签添加active类
+                    event.target.classList.add('active');
+                    
+                    // 重新渲染课程
+                    renderCourses();
+                }
+            });
+        }
+
+        // 保存进度到localStorage
+        function saveProgress() {
+            localStorage.setItem('mathCourseProgress', JSON.stringify(courseProgress));
+        }
+
+        // 从localStorage加载进度
+        function loadProgress() {
+            const savedProgress = localStorage.getItem('mathCourseProgress');
+            if (savedProgress) {
+                courseProgress = JSON.parse(savedProgress);
+            } else {
+                // 初始化空进度
+                courseProgress = {};
+                
+                // 为每个课程创建默认进度记录
+                for (const term in courseData) {
+                    for (const grade in courseData[term]) {
+                        courseData[term][grade].forEach(course => {
+                            const courseId = `${grade}-${course.code}`;
+                            courseProgress[courseId] = {
+                                completed: false,
+                                inProgress: false,
+                                completedDate: null
+                            };
+                        });
+                    }
+                }
+                
+                saveProgress();
+            }
+        }
+
+        // 渲染课程卡片
+        function renderCourses() {
+            const container = document.getElementById('courses-container');
+            const gradeFilter = document.querySelector('#grade-tags .filter-tag.active').dataset.value;
+            const termFilter = document.querySelector('#term-tags .filter-tag.active').dataset.value;
+            const statusFilter = document.querySelector('#status-tags .filter-tag.active').dataset.value;
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            
+            container.innerHTML = '';
+            
+            let totalCourses = 0;
+            let completedCourses = 0;
+            let inProgressCourses = 0;
+            
+            // 遍历所有学期和年级
+            for (const term in courseData) {
+                // 应用学期过滤器
+                if (termFilter !== 'all' && termFilter !== term) continue;
+                
+                for (const grade in courseData[term]) {
+                    // 应用年级过滤器
+                    if (gradeFilter !== 'all' && gradeFilter !== grade) continue;
+                    
+                    courseData[term][grade].forEach(course => {
+                        // 应用搜索过滤器
+                        if (searchQuery && 
+                            !course.name.toLowerCase().includes(searchQuery) &&
+                            !course.code.toLowerCase().includes(searchQuery)) {
+                            return;
+                        }
+                        
+                        const courseId = `${grade}-${course.code}`;
+                        const progress = courseProgress[courseId] || {
+                            completed: false,
+                            inProgress: false,
+                            completedDate: null
+                        };
+                        
+                        totalCourses++;
+                        if (progress.completed) completedCourses++;
+                        if (progress.inProgress && !progress.completed) inProgressCourses++;
+                        
+                        // 应用状态过滤器
+                        if (statusFilter !== 'all') {
+                            if (statusFilter === 'completed' && !progress.completed) return;
+                            if (statusFilter === 'in-progress' && !progress.inProgress) return;
+                            if (statusFilter === 'not-started' && (progress.completed || progress.inProgress)) return;
+                        }
+                        
+                        // 创建课程卡片
+                        const card = document.createElement('div');
+                        card.className = 'course-card';
+                        if (progress.completed) card.classList.add('completed');
+                        else if (progress.inProgress) card.classList.add('in-progress');
+                        
+                        const statusClass = progress.completed ? 'status-completed' : 
+                                          progress.inProgress ? 'status-in-progress' : 'status-not-started';
+                        const statusText = progress.completed ? '已完成' : 
+                                          progress.inProgress ? '进行中' : '未开始';
+                        
+                        // 根据状态确定显示的按钮
+                        let statusButtons = '';
+                        if (progress.completed) {
+                            statusButtons = `
+                                <button class="status-btn reset-btn" data-course-id="${courseId}" data-action="reset">重置</button>
+                            `;
+                        } else if (progress.inProgress) {
+                            statusButtons = `
+                                <button class="status-btn complete-btn" data-course-id="${courseId}" data-action="complete">完成</button>
+                                <button class="status-btn reset-btn" data-course-id="${courseId}" data-action="reset">重置</button>
+                            `;
+                        } else {
+                            statusButtons = `
+                                <button class="status-btn start-btn" data-course-id="${courseId}" data-action="start">开始</button>
+                            `;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="course-code">${course.code}</div>
+                            <div class="course-name">${course.name}</div>
+                            <div class="course-status">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                <div class="status-controls">
+                                    ${statusButtons}
+                                </div>
+                            </div>
+                            ${progress.completed ? 
+                                `<div class="completion-date">完成于: ${formatDate(progress.completedDate)}</div>` : 
+                                ''
+                            }
+                        `;
+                        
+                        container.appendChild(card);
+                    });
+                }
+            }
+            
+            // 如果没有课程匹配筛选条件
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="no-courses">没有找到匹配的课程</div>';
+            }
+            
+            // 更新统计信息
+            updateStats(totalCourses, completedCourses, inProgressCourses);
+            
+            // 添加事件监听器到新创建的按钮
+            document.querySelectorAll('.status-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseId = this.getAttribute('data-course-id');
+                    const action = this.getAttribute('data-action');
+                    updateCourseProgress(courseId, action);
+                });
+            });
+        }
+
+        // 更新课程进度状态
+        function updateCourseProgress(courseId, action) {
+            const progress = courseProgress[courseId];
+            
+            switch(action) {
+                case 'start':
+                    progress.inProgress = true;
+                    progress.completed = false;
+                    progress.completedDate = null;
+                    break;
+                case 'complete':
+                    progress.inProgress = false;
+                    progress.completed = true;
+                    progress.completedDate = new Date().toISOString();
+                    break;
+                case 'reset':
+                    progress.inProgress = false;
+                    progress.completed = false;
+                    progress.completedDate = null;
+                    break;
+            }
+            
+            saveProgress();
+            renderCourses();
+        }
+
+        // 更新统计信息
+        function updateStats(total, completed, inProgress) {
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('inprogress-count').textContent = inProgress;
+            document.getElementById('progress-percent').textContent = total > 0 ? 
+                Math.round((completed / total) * 100) + '%' : '0%';
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        }
+
+        // 全局变量存储课程进度
+        let courseProgress = {};
+    </script>
+</body>
+</html>

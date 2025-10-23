@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学而思计算秘籍打卡系统</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --border-radius: 6px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+        
+        .main-content {
+            flex: 1;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            margin: 15px 0 10px;
+            font-size: 1.3rem;
+        }
+        
+        .grade-list {
+            list-style: none;
+        }
+        
+        .grade-item {
+            margin-bottom: 10px;
+        }
+        
+        .grade-button {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--light-color);
+            border: none;
+            border-radius: var(--border-radius);
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .grade-button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .grade-button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .lecture {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: #f8f9fa;
+        }
+        
+        .lecture-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .secret-list {
+            list-style: none;
+            margin-left: 20px;
+        }
+        
+        .secret-item {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .secret-item:last-child {
+            border-bottom: none;
+        }
+        
+        .secret-title {
+            flex: 1;
+        }
+        
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .checked {
+            text-decoration: line-through;
+            color: #888;
+        }
+        
+        .time-display {
+            font-size: 0.85rem;
+            color: #666;
+            margin-left: 10px;
+        }
+        
+        .edit-time {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .time-input {
+            padding: 3px 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+        
+        .save-time {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 5px;
+        }
+        
+        .cancel-edit {
+            background-color: #ddd;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 5px;
+        }
+        
+        .progress {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7fe;
+            border-radius: var(--border-radius);
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1 style="font-size: 22px;">学而思计算秘籍</h1>
+            <ul class="grade-list">
+                <li class="grade-item">
+                    <button class="grade-button active" data-grade="1">一年级</button>
+                </li>
+                <li class="grade-item">
+                    <button class="grade-button" data-grade="2">二年级</button>
+                </li>
+                <li class="grade-item">
+                    <button class="grade-button" data-grade="3">三年级</button>
+                </li>
+                <li class="grade-item">
+                    <button class="grade-button" data-grade="4">四年级</button>
+                </li>
+                <li class="grade-item">
+                    <button class="grade-button" data-grade="5">五年级</button>
+                </li>
+                <li class="grade-item">
+                    <button class="grade-button" data-grade="6">六年级</button>
+                </li>
+            </ul>
+            
+            <div class="progress">
+                <h3>学习进度</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text" id="progress-text">0%</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div id="grade-content">
+                <!-- 年级内容将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 目录数据结构
+        const directoryData = {
+            1: [
+                {
+                    title: "第1讲 不进位加法",
+                    secrets: [
+                        "秘籍1 一位数加一位数",
+                        "秘籍2 两位数加一位数",
+                        "秘籍3 两位数加两位数",
+                        "秘籍4 多个数相加"
+                    ]
+                },
+                {
+                    title: "第2讲 进位加法",
+                    secrets: [
+                        "秘籍1 一位数加一位数",
+                        "秘籍2 两位数加一位数",
+                        "秘籍3 两位数加两位数"
+                    ]
+                },
+                {
+                    title: "第3讲 不借位减法",
+                    secrets: [
+                        "秘籍1 一位数减一位数",
+                        "秘籍2 两位数减一位数",
+                        "秘籍3 两位数减两位数"
+                    ]
+                },
+                {
+                    title: "第4讲 借位减法",
+                    secrets: [
+                        "秘籍1 两位数减一位数",
+                        "秘籍2 两位数减两位数"
+                    ]
+                },
+                {
+                    title: "第5讲 带符号搬家",
+                    secrets: [
+                        "秘籍1 加法带符号搬家",
+                        "秘籍2 减法带符号搬家",
+                        "秘籍3 加减法混合运算带符号搬家",
+                        "秘籍4 加减法混合运算不够减的带符号搬家"
+                    ]
+                },
+                {
+                    title: "第6讲 拆补法",
+                    secrets: [
+                        "秘籍1 加法拆补法",
+                        "秘籍2 减法拆补法",
+                        "秘籍3 三个数连减的拆补法",
+                        "秘籍4 加减法混合的拆补法应用"
+                    ]
+                },
+                {
+                    title: "第7讲 单双数计算",
+                    secrets: [
+                        "秘籍1 判单双,观个位",
+                        "秘籍2 两个数的加减法",
+                        "秘籍3 多个数的加减法",
+                        "秘籍4 单变双不变"
+                    ]
+                },
+                {
+                    title: "第8讲 找规律填数",
+                    secrets: [
+                        "秘籍1 相邻数之间找规律",
+                        "秘籍2 间隔跳着找规律",
+                        "秘籍3 分组找规律",
+                        "秘籍4 数表找规律"
+                    ]
+                },
+                {
+                    title: "第9讲 口算综合",
+                    secrets: [
+                        "秘籍1 凑十法",
+                        "秘籍2 分组凑整法",
+                        "秘籍3 带符号搬家",
+                        "秘籍4 数的拆补",
+                        "秘籍5 加减抵消"
+                    ]
+                },
+                {
+                    title: "第10讲 总复习",
+                    secrets: [
+                        "秘籍1 加减法的竖式计算",
+                        "秘籍2 加减法的巧算",
+                        "秘籍3 单双数计算",
+                        "秘籍4 找规律填数"
+                    ]
+                }
+            ],
+            2: [
+                {
+                    title: "第1讲 连进退位加减法",
+                    secrets: [
+                        "秘籍1 连进位加法",
+                        "秘籍2 连退位减法",
+                        "秘籍3 中间、末尾有\"0\"",
+                        "秘籍4 数字谜",
+                        "秘籍5 连续减法"
+                    ]
+                },
+                {
+                    title: "第2讲 交换律、结合律",
+                    secrets: [
+                        "秘籍1 加法交换律",
+                        "秘籍2 加法结合律",
+                        "秘籍3 加减混合",
+                        "秘籍4 加减混合一长串,需带符号来搬家"
+                    ]
+                },
+                {
+                    title: "第3讲 添去括号",
+                    secrets: [
+                        "秘籍1 括号前面是加号,添去括号不变号",
+                        "秘籍2 括号前面是减号,添去括号要变号"
+                    ]
+                },
+                {
+                    title: "第4讲 基准数法",
+                    secrets: [
+                        "秘籍1 加数相同,变加为乘",
+                        "秘籍2 加数相近,取整为同",
+                        "秘籍3 加数等差,向中看齐",
+                        "秘籍4 基准数法的灵活应用"
+                    ]
+                },
+                {
+                    title: "第5讲 拆补凑整法",
+                    secrets: [
+                        "秘籍1 加法拆补凑整",
+                        "秘籍2 减法拆补凑整",
+                        "秘籍3 加减混合运算的拆补凑整"
+                    ]
+                },
+                {
+                    title: "第6讲 找规律计算",
+                    secrets: [
+                        "秘籍1 加减类",
+                        "秘籍2 乘除类"
+                    ]
+                },
+                {
+                    title: "第7讲 金字塔数列",
+                    secrets: [
+                        "秘籍1 认识金字塔数列",
+                        "秘籍2 金字塔数列求和",
+                        "秘籍3 不完整的金字塔数列求和",
+                        "秘籍4 异形金字塔数列求和",
+                        "秘籍5 金字塔数列应用"
+                    ]
+                },
+                {
+                    title: "第8讲 等差数列求和",
+                    secrets: [
+                        "秘籍1 认识等差数列",
+                        "秘籍2 简单等差数列求和",
+                        "秘籍3 等差数列中项求和",
+                        "秘籍4 等差数列应用"
+                    ]
+                },
+                {
+                    title: "第9讲 分组法",
+                    secrets: [
+                        "秘籍1 两数分成一组",
+                        "秘籍2 多个数分成一组"
+                    ]
+                },
+                {
+                    title: "第10讲 有余数的除法",
+                    secrets: [
+                        "秘籍1 被除数÷除数=商",
+                        "秘籍2 被除数÷除数=商……余数",
+                        "秘籍3 被除数=商×除数+余数",
+                        "秘籍4 除数=(被除数-余数)÷商",
+                        "秘籍5 有余数除法中的最值问题"
+                    ]
+                },
+                {
+                    title: "第11讲 加减法数字谜",
+                    secrets: [
+                        "秘籍1 首位、末位分析",
+                        "秘籍2 进位、退位分析",
+                        "秘籍3 综合"
+                    ]
+                },
+                {
+                    title: "第12讲 综合练习",
+                    secrets: [
+                        "秘籍1 四则混合类计算",
+                        "秘籍2 数列类综合",
+                        "秘籍3 数表、数字谜综合"
+                    ]
+                }
+            ],
+            3: [
+                {
+                    title: "第1讲 带符号搬家",
+                    secrets: [
+                        "秘籍1 加数互补要带符号搬家",
+                        "秘籍2 减号同尾要带符号搬家",
+                        "秘籍3 不够减时要带符号搬家",
+                        "秘籍4 特殊乘数要带符号搬家",
+                        "秘籍5 乘除抵消要带符号搬家"
+                    ]
+                },
+                {
+                    title: "第2讲 添去括号",
+                    secrets: [
+                        "秘籍1 添括号",
+                        "秘籍2 去括号",
+                        "秘籍3 分组"
+                    ]
+                },
+                {
+                    title: "第3讲 加补和基准数",
+                    secrets: [
+                        "秘籍1 加法中的加补凑整",
+                        "秘籍2 减法中的加补凑整",
+                        "秘籍3 几个接近数的加减运算"
+                    ]
+                },
+                {
+                    title: "第4讲 乘法分配律",
+                    secrets: [
+                        "秘籍1 乘法分配律的基本应用",
+                        "秘籍2 乘法分配律巧应用",
+                        "秘籍3 乘法分配律的逆运用——提取公因数"
+                    ]
+                },
+                {
+                    title: "第5讲 等差数列",
+                    secrets: [
+                        "秘籍1 等差数列求项数",
+                        "秘籍2 等差数列求和",
+                        "秘籍3 等差数列中项定理",
+                        "秘籍4 等差数列的综合应用"
+                    ]
+                },
+                {
+                    title: "第6讲 数列与数表",
+                    secrets: [
+                        "秘籍1 简单常见数列",
+                        "秘籍2 二级等差数列",
+                        "秘籍3 简单数表计算"
+                    ]
+                },
+                {
+                    title: "第7讲 特殊数的乘法",
+                    secrets: [
+                        "秘籍1 末位\"0\"的乘法",
+                        "秘籍2 含5或15的乘法",
+                        "秘籍3 多位\"1\"的乘法",
+                        "秘籍4 乘法计算中的\"好朋友\"",
+                        "秘籍5 末位\"1\"的乘法",
+                        "秘籍6 多位\"9\"的乘法"
+                    ]
+                },
+                {
+                    title: "第8讲 重叠数的计算",
+                    secrets: [
+                        "秘籍1 两位数重叠数",
+                        "秘籍2 多位数重叠数",
+                        "秘籍3 两位数多次重叠数",
+                        "秘籍4 多位数多次重叠数",
+                        "秘籍5 隐秘重叠数",
+                        "秘籍6 重叠数的计算"
+                    ]
+                },
+                {
+                    title: "第9讲 位值原理在计算中的应用",
+                    secrets: [
+                        "秘籍1 位值原理",
+                        "秘籍2 利用位值原理巧算"
+                    ]
+                },
+                {
+                    title: "第10讲 定义新运算",
+                    secrets: [
+                        "秘籍1 直接运算型",
+                        "秘籍2 观察规律型"
+                    ]
+                },
+                {
+                    title: "第11讲 数字谜",
+                    secrets: [
+                        "秘籍1 金三角",
+                        "秘籍2 首末位分析法",
+                        "秘籍3 进位、借位分析法"
+                    ]
+                },
+                {
+                    title: "第12讲 综合练习",
+                    secrets: [
+                        "秘籍1 凑整法",
+                        "秘籍2 数列",
+                        "秘籍3 运算定律",
+                        "秘籍4 计算推理"
+                    ]
+                }
+            ],
+            4: [
+                {
+                    title: "第1讲 特殊的乘法",
+                    secrets: [
+                        "秘籍1 同补的速算",
+                        "秘籍2 补同的速算",
+                        "秘籍3 两位数乘\"99\"的速算",
+                        "秘籍4 重叠数的速算"
+                    ]
+                },
+                {
+                    title: "第2讲 等差数列进阶",
+                    secrets: [
+                        "秘籍1 一般的公式套用",
+                        "秘籍2 等差数列混合运算中的分组思想",
+                        "秘籍3 等差数列求第n项",
+                        "秘籍4 等差数列的运用"
+                    ]
+                },
+                {
+                    title: "第3讲 提取公因数",
+                    secrets: [
+                        "秘籍1 直接提取公因数",
+                        "秘籍2 变化后提取公因数",
+                        "秘籍3 二次提取公因数"
+                    ]
+                },
+                {
+                    title: "第4讲 从简单情况入手",
+                    secrets: [
+                        "秘籍1 神奇有趣的方法",
+                        "秘籍2 从简单归纳",
+                        "秘籍3 位数递增的叠数相加",
+                        "秘籍4 几位数乘几个\"9\"的方法",
+                        "秘籍5 从简单入手的综合运用"
+                    ]
+                },
+                {
+                    title: "第5讲 四则混合运算",
+                    secrets: [
+                        "秘籍1 乘法计算中的速算技巧",
+                        "秘籍2 加、减、乘、除运算中的计算技巧",
+                        "秘籍3 除法性质的运用技巧",
+                        "秘籍4 多重括号的运算技巧"
+                    ]
+                },
+                {
+                    title: "第6讲 公式类计算",
+                    secrets: [
+                        "秘籍1 连续的自然数求和公式",
+                        "秘籍2 山顶和公式的巧用",
+                        "秘籍3 \"天下无双，个数平方\"",
+                        "秘籍4 平方差公式"
+                    ]
+                },
+                {
+                    title: "第7讲 小数加减法",
+                    secrets: [
+                        "秘籍1 分组凑整",
+                        "秘籍2 加补凑整"
+                    ]
+                },
+                {
+                    title: "第8讲 定义新运算",
+                    secrets: [
+                        "秘籍1 照猫画猫",
+                        "秘籍2 照猫画虎",
+                        "秘籍3 将文字叙述转换成数学算式"
+                    ]
+                },
+                {
+                    title: "第9讲 高斯记号",
+                    secrets: [
+                        "秘籍1 高斯记号的定义",
+                        "秘籍2 先转换再计算",
+                        "秘籍3 先找规律再计算",
+                        "秘籍4 先推理再计算"
+                    ]
+                },
+                {
+                    title: "第10讲 数列与数表",
+                    secrets: [
+                        "秘籍1 较简单的数列",
+                        "秘籍2 复杂的数列",
+                        "秘籍3 简单数表计算",
+                        "秘籍4 稍复杂数表中的计算"
+                    ]
+                },
+                {
+                    title: "第11讲 数字谜",
+                    secrets: [
+                        "秘籍1 \"打包\"求和",
+                        "秘籍2 个位分析和高位分析",
+                        "秘籍3 利用整除特点分析"
+                    ]
+                },
+                {
+                    title: "第12讲 位值原理与进制",
+                    secrets: [
+                        "秘籍1 位值原理",
+                        "秘籍2 N进制化十进制",
+                        "秘籍3 十进制化N进制",
+                        "秘籍4 进制计算"
+                    ]
+                },
+                {
+                    title: "第13讲 综合练习",
+                    secrets: [
+                        "秘籍1 凑整法",
+                        "秘籍2 公式类的综合",
+                        "秘籍3 高斯记号",
+                        "秘籍4 数列与数表、数字谜"
+                    ]
+                }
+            ],
+            5: [
+                {
+                    title: "第1讲 小数乘除法（1）",
+                    secrets: [
+                        "秘籍1 凑整法",
+                        "秘籍2 乘除抵消法"
+                    ]
+                },
+                {
+                    title: "第2讲 小数乘除法（2）",
+                    secrets: [
+                        "秘籍1 直接提取公因数",
+                        "秘籍2 变形提取公因数",
+                        "秘籍3 二次提取公因数",
+                        "秘籍4 换元思想"
+                    ]
+                },
+                {
+                    title: "第3讲 简易方程和方程组",
+                    secrets: [
+                        "秘籍1 \"过桥\"变号",
+                        "秘籍2 有括号的方程",
+                        "秘籍3 巧解简易方程组"
+                    ]
+                },
+                {
+                    title: "第4讲 不定方程",
+                    secrets: [
+                        "秘籍1 利用枚举法解不定方程",
+                        "秘籍2 利用整除性质解不定方程",
+                        "秘籍3 利用余数性质解不定方程",
+                        "秘籍4 解不定方程组与位置原理综合"
+                    ]
+                },
+                {
+                    title: "第5讲 分数加减法",
+                    secrets: [
+                        "秘籍1 先通分再计算",
+                        "秘籍2 分母相同找朋友",
+                        "秘籍3 拆分"
+                    ]
+                },
+                {
+                    title: "第6讲 分数与小数互化及相关计算",
+                    secrets: [
+                        "秘籍1 分数化小数",
+                        "秘籍2 小数化分数",
+                        "秘籍3 循环小数的计算",
+                        "秘籍4 综合"
+                    ]
+                },
+                {
+                    title: "第7讲 错位相减",
+                    secrets: [
+                        "秘籍1 简单的错位相减",
+                        "秘籍2 巧求1/n + 1/n² + 1/n³ + ... + 1/nᵏ（n是正整数）",
+                        "秘籍3 综合"
+                    ]
+                },
+                {
+                    title: "第8讲 分数比较大小",
+                    secrets: [
+                        "秘籍1 两个数比较大小",
+                        "秘籍2 多个数比较大小",
+                        "秘籍3 糖水原理"
+                    ]
+                },
+                {
+                    title: "第9讲 分数单位分拆",
+                    secrets: [
+                        "秘籍1 巧填1/A = 1/() + 1/()型类",
+                        "秘籍2 巧填1/A = 1/() - 1/()型类",
+                        "秘籍3 混合类型题"
+                    ]
+                },
+                {
+                    title: "第10讲 分数小数混合计算",
+                    secrets: [
+                        "秘籍1 分数、小数加减类",
+                        "秘籍2 分数、小数乘除类",
+                        "秘籍3 提取公因数"
+                    ]
+                },
+                {
+                    title: "第11讲 公式进阶（平方差与完全平方公式）",
+                    secrets: [
+                        "秘籍1 平方差公式",
+                        "秘籍2 完全平方公式",
+                        "秘籍3 综合"
+                    ]
+                },
+                {
+                    title: "第12讲 数字谜综合",
+                    secrets: [
+                        "秘籍1 首末进退位分析——从已知\"数字和\"特殊位置突破",
+                        "秘籍2 神奇的\"9\"——从\"数字和\"入手",
+                        "秘籍3 数字谜中的数论分析",
+                        "秘籍4 数字谜综合——极端思想"
+                    ]
+                },
+                {
+                    title: "第13讲 定义新运算",
+                    secrets: [
+                        "秘籍1 直接代入（将定义新运算中的字母分别替换为前后的两数即可）",
+                        "秘籍2 照猫画猫（有多个新运算时，要按顺序分层计算）",
+                        "秘籍3 照猫画虎（找规律）",
+                        "秘籍4 含有未知数的定义新运算"
+                    ]
+                },
+                {
+                    title: "第14讲 归纳与递推",
+                    secrets: [
+                        "秘籍1 周期与规律",
+                        "秘籍2 点分线、线分面公式",
+                        "秘籍3 \"3^n\"的规律"
+                    ]
+                },
+                {
+                    title: "第15讲 综合练习",
+                    secrets: [
+                        "秘籍1 小数类相关计算",
+                        "秘籍2 分数加减类、分小混合类相关计算",
+                        "秘籍3 方程综合",
+                        "秘籍4 公式类（平方差，完全平方公式，错位相减）",
+                        "秘籍5 综合类"
+                    ]
+                }
+            ],
+            6: [
+                {
+                    title: "第1讲 分数的运算技巧（1）",
+                    secrets: [
+                        "秘籍1 乘法分配律的灵活运用",
+                        "秘籍2 直接提取公因数",
+                        "秘籍3 先转化再提取公因数",
+                        "秘籍4 二次提取公因数"
+                    ]
+                },
+                {
+                    title: "第2讲 分数的运算技巧（2）",
+                    secrets: [
+                        "秘籍1 凑整法",
+                        "秘籍2 拆分法",
+                        "秘籍3 整体约分法",
+                        "秘籍4 连锁约分"
+                    ]
+                },
+                {
+                    title: "第3讲 分数裂项",
+                    secrets: [
+                        "秘籍1 裂差",
+                        "秘籍2 裂和",
+                        "秘籍3 综合裂项"
+                    ]
+                },
+                {
+                    title: "第4讲 繁分数",
+                    secrets: [
+                        "秘籍1 繁分数化简常用方法",
+                        "秘籍2 繁分数化简技巧",
+                        "秘籍3 连分数的化简"
+                    ]
+                },
+                {
+                    title: "第5讲 换元法",
+                    secrets: [
+                        "秘籍1 用字母代替一个大数",
+                        "秘籍2 用字母代换一个长算式",
+                        "秘籍3 用字母代替一个繁分数"
+                    ]
+                },
+                {
+                    title: "第6讲 公式类的计算",
+                    secrets: [
+                        "秘籍1 自然数平方和公式",
+                        "秘籍2 自然数立方和公式"
+                    ]
+                },
+                {
+                    title: "第7讲 整数裂项",
+                    secrets: [
+                        "秘籍1 数列公差为1因数个数为2的整数裂项",
+                        "秘籍2 数列公差为2因数个数为2的整数裂项",
+                        "秘籍3 数列公差为1因数个数为3的整数裂项",
+                        "秘籍4 数列公差为2因数个数为3的整数裂项",
+                        "秘籍5 数列公差为6因数个数为3的整数裂项",
+                        "秘籍6 不符合要求的算式先变形再裂项"
+                    ]
+                },
+                {
+                    title: "第8讲 归纳与递推",
+                    secrets: [
+                        "秘籍1 斐波那契数列的应用",
+                        "秘籍2 通项公式的应用"
+                    ]
+                },
+                {
+                    title: "第9讲 比与比例",
+                    secrets: [
+                        "秘籍1 与\"比\"相关的计算",
+                        "秘籍2 与\"比例\"相关的计算"
+                    ]
+                },
+                {
+                    title: "第10讲 解分数系数方程",
+                    secrets: [
+                        "秘籍1 复习整数系数方程",
+                        "秘籍2 去分母化分数系数方程为整数方程",
+                        "秘籍3 分母中有小数的分数方程"
+                    ]
+                },
+                {
+                    title: "第11讲 解方程组",
+                    secrets: [
+                        "秘籍1 代入消元",
+                        "秘籍2 加减消元",
+                        "秘籍3 解多元一次方程组"
+                    ]
+                },
+                {
+                    title: "第12讲 定义新运算",
+                    secrets: [
+                        "秘籍1 照猫画猫",
+                        "秘籍2 照猫画虎",
+                        "秘籍3 方程与定义新运算的综合"
+                    ]
+                },
+                {
+                    title: "第13讲 用放缩法估值",
+                    secrets: [
+                        "秘籍1 整体放缩",
+                        "秘籍2 分段放缩",
+                        "秘籍3 头尾放缩"
+                    ]
+                },
+                {
+                    title: "第14讲 综合训练（1）",
+                    secrets: [
+                        "秘籍1 拆分与凑整的综合运用",
+                        "秘籍2 换元法综合运用",
+                        "秘籍3 裂项的综合运用",
+                        "秘籍4 综合应用知识进行拆分与凑整"
+                    ]
+                },
+                {
+                    title: "第15讲 综合训练（2）",
+                    secrets: [
+                        "秘籍1 定义新运算综合",
+                        "秘籍2 比与比例相关计算",
+                        "秘籍3 解方程组综合",
+                        "秘籍4 通项归纳型计算题",
+                        "秘籍5 放缩法综合运用",
+                        "秘籍6 归纳递推与解方程的结合"
+                    ]
+                }
+            ]
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载默认年级（一年级）
+            loadGradeContent(1);
+            
+            // 绑定年级切换事件
+            document.querySelectorAll('.grade-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有active类
+                    document.querySelectorAll('.grade-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // 添加active类到当前按钮
+                    this.classList.add('active');
+                    
+                    // 加载对应年级内容
+                    const grade = parseInt(this.getAttribute('data-grade'));
+                    loadGradeContent(grade);
+                });
+            });
+        });
+
+        // 加载年级内容
+        function loadGradeContent(grade) {
+            const contentDiv = document.getElementById('grade-content');
+            contentDiv.innerHTML = '';
+            
+            // 创建标题
+            const title = document.createElement('h2');
+            title.textContent = `${grade}年级目录`;
+            contentDiv.appendChild(title);
+            
+            // 创建目录结构
+            const lectures = directoryData[grade];
+            lectures.forEach((lecture, lectureIndex) => {
+                const lectureDiv = document.createElement('div');
+                lectureDiv.className = 'lecture';
+                
+                // 创建讲标题
+                const lectureTitle = document.createElement('div');
+                lectureTitle.className = 'lecture-title';
+                
+                const lectureCheckbox = document.createElement('input');
+                lectureCheckbox.type = 'checkbox';
+                lectureCheckbox.className = 'checkbox lecture-checkbox';
+                lectureCheckbox.id = `grade-${grade}-lecture-${lectureIndex}`;
+                lectureCheckbox.addEventListener('change', function() {
+                    toggleLecture(this, grade, lectureIndex);
+                });
+                
+                const lectureLabel = document.createElement('label');
+                lectureLabel.htmlFor = lectureCheckbox.id;
+                lectureLabel.textContent = lecture.title;
+                
+                lectureTitle.appendChild(lectureCheckbox);
+                lectureTitle.appendChild(lectureLabel);
+                
+                // 添加讲的时间显示
+                const lectureTimeDisplay = document.createElement('span');
+                lectureTimeDisplay.className = 'time-display';
+                lectureTitle.appendChild(lectureTimeDisplay);
+                
+                // 添加讲的时间编辑按钮
+                const lectureEditTime = document.createElement('span');
+                lectureEditTime.className = 'edit-time';
+                lectureEditTime.textContent = '修改时间';
+                lectureEditTime.addEventListener('click', function() {
+                    editTime(`grade-${grade}-lecture-${lectureIndex}`, lectureTimeDisplay, lectureEditTime);
+                });
+                lectureTitle.appendChild(lectureEditTime);
+                
+                lectureDiv.appendChild(lectureTitle);
+                
+                // 创建秘籍列表
+                const secretList = document.createElement('ul');
+                secretList.className = 'secret-list';
+                
+                lecture.secrets.forEach((secret, secretIndex) => {
+                    const secretItem = document.createElement('li');
+                    secretItem.className = 'secret-item';
+                    
+                    const secretCheckbox = document.createElement('input');
+                    secretCheckbox.type = 'checkbox';
+                    secretCheckbox.className = 'checkbox secret-checkbox';
+                    secretCheckbox.id = `grade-${grade}-lecture-${lectureIndex}-secret-${secretIndex}`;
+                    secretCheckbox.addEventListener('change', function() {
+                        toggleSecret(this, grade, lectureIndex, secretIndex);
+                    });
+                    
+                    const secretLabel = document.createElement('label');
+                    secretLabel.className = 'secret-title';
+                    secretLabel.htmlFor = secretCheckbox.id;
+                    secretLabel.textContent = secret;
+                    
+                    // 添加秘籍的时间显示
+                    const secretTimeDisplay = document.createElement('span');
+                    secretTimeDisplay.className = 'time-display';
+                    
+                    // 添加秘籍的时间编辑按钮
+                    const secretEditTime = document.createElement('span');
+                    secretEditTime.className = 'edit-time';
+                    secretEditTime.textContent = '修改时间';
+                    secretEditTime.addEventListener('click', function() {
+                        editTime(`grade-${grade}-lecture-${lectureIndex}-secret-${secretIndex}`, secretTimeDisplay, secretEditTime);
+                    });
+                    
+                    secretItem.appendChild(secretCheckbox);
+                    secretItem.appendChild(secretLabel);
+                    secretItem.appendChild(secretTimeDisplay);
+                    secretItem.appendChild(secretEditTime);
+                    
+                    secretList.appendChild(secretItem);
+                });
+                
+                lectureDiv.appendChild(secretList);
+                contentDiv.appendChild(lectureDiv);
+            });
+            
+            // 更新所有项目的状态
+            updateAllCheckboxStates(grade);
+            updateProgress();
+        }
+
+        // 切换讲的状态
+        function toggleLecture(checkbox, grade, lectureIndex) {
+            const lectureId = `grade-${grade}-lecture-${lectureIndex}`;
+            const isChecked = checkbox.checked;
+            
+            // 更新讲的状态
+            updateItemState(lectureId, isChecked);
+            
+            // 更新所有秘籍的状态
+            const lecture = directoryData[grade][lectureIndex];
+            lecture.secrets.forEach((secret, secretIndex) => {
+                const secretId = `${lectureId}-secret-${secretIndex}`;
+                updateItemState(secretId, isChecked);
+            });
+            
+            // 更新显示状态
+            updateAllCheckboxStates(grade);
+            updateProgress();
+        }
+
+        // 切换秘籍的状态
+        function toggleSecret(checkbox, grade, lectureIndex, secretIndex) {
+            const secretId = `grade-${grade}-lecture-${lectureIndex}-secret-${secretIndex}`;
+            const isChecked = checkbox.checked;
+            
+            // 更新秘籍的状态
+            updateItemState(secretId, isChecked);
+            
+            // 检查讲是否需要更新
+            const lectureId = `grade-${grade}-lecture-${lectureIndex}`;
+            checkAndUpdateLectureState(grade, lectureIndex);
+            
+            updateAllCheckboxStates(grade);
+            updateProgress();
+        }
+
+        // 更新项目状态到localStorage
+        function updateItemState(id, isChecked) {
+            let states = JSON.parse(localStorage.getItem('checkStates')) || {};
+            
+            if (isChecked) {
+                states[id] = {
+                    checked: true,
+                    time: new Date().toISOString()
+                };
+            } else {
+                delete states[id];
+            }
+            
+            localStorage.setItem('checkStates', JSON.stringify(states));
+        }
+
+        // 检查并更新讲的状态
+        function checkAndUpdateLectureState(grade, lectureIndex) {
+            const lectureId = `grade-${grade}-lecture-${lectureIndex}`;
+            const lecture = directoryData[grade][lectureIndex];
+            let allChecked = true;
+            
+            // 检查所有秘籍是否都已打卡
+            lecture.secrets.forEach((secret, secretIndex) => {
+                const secretId = `${lectureId}-secret-${secretIndex}`;
+                const states = JSON.parse(localStorage.getItem('checkStates')) || {};
+                
+                if (!states[secretId] || !states[secretId].checked) {
+                    allChecked = false;
+                }
+            });
+            
+            // 更新讲的状态
+            let states = JSON.parse(localStorage.getItem('checkStates')) || {};
+            
+            if (allChecked) {
+                // 如果所有秘籍都已打卡，设置讲为打卡状态
+                if (!states[lectureId] || !states[lectureId].checked) {
+                    states[lectureId] = {
+                        checked: true,
+                        time: new Date().toISOString()
+                    };
+                }
+            } else {
+                // 如果有任何秘籍未打卡，取消讲的打卡状态
+                delete states[lectureId];
+            }
+            
+            localStorage.setItem('checkStates', JSON.stringify(states));
+        }
+
+        // 更新所有复选框的状态
+        function updateAllCheckboxStates(grade) {
+            const states = JSON.parse(localStorage.getItem('checkStates')) || {};
+            
+            // 更新所有复选框
+            document.querySelectorAll('.lecture-checkbox, .secret-checkbox').forEach(checkbox => {
+                const id = checkbox.id;
+                
+                if (states[id] && states[id].checked) {
+                    checkbox.checked = true;
+                    
+                    // 更新标签样式
+                    const label = document.querySelector(`label[for="${id}"]`);
+                    if (label) {
+                        label.classList.add('checked');
+                    }
+                    
+                    // 更新时间显示
+                    const timeDisplay = checkbox.parentNode.querySelector('.time-display');
+                    if (timeDisplay) {
+                        const time = new Date(states[id].time);
+                        timeDisplay.textContent = `完成时间: ${time.toLocaleString()}`;
+                    }
+                } else {
+                    checkbox.checked = false;
+                    
+                    // 更新标签样式
+                    const label = document.querySelector(`label[for="${id}"]`);
+                    if (label) {
+                        label.classList.remove('checked');
+                    }
+                    
+                    // 清空时间显示
+                    const timeDisplay = checkbox.parentNode.querySelector('.time-display');
+                    if (timeDisplay) {
+                        timeDisplay.textContent = '';
+                    }
+                }
+            });
+        }
+
+        // 编辑时间
+        function editTime(id, timeDisplayElement, editButton) {
+            const states = JSON.parse(localStorage.getItem('checkStates')) || {};
+            const currentTime = states[id] ? states[id].time : new Date().toISOString();
+            
+            // 创建时间输入
+            const timeInput = document.createElement('input');
+            timeInput.type = 'datetime-local';
+            timeInput.className = 'time-input';
+            timeInput.value = new Date(currentTime).toISOString().slice(0, 16);
+            
+            // 创建保存按钮
+            const saveButton = document.createElement('button');
+            saveButton.className = 'save-time';
+            saveButton.textContent = '保存';
+            
+            // 创建取消按钮
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'cancel-edit';
+            cancelButton.textContent = '取消';
+            
+            // 隐藏编辑按钮和时间显示
+            timeDisplayElement.style.display = 'none';
+            editButton.style.display = 'none';
+            
+            // 添加输入和按钮
+            editButton.parentNode.insertBefore(timeInput, editButton);
+            editButton.parentNode.insertBefore(saveButton, editButton);
+            editButton.parentNode.insertBefore(cancelButton, editButton);
+            
+            // 保存时间
+            saveButton.addEventListener('click', function() {
+                const newTime = new Date(timeInput.value).toISOString();
+                
+                // 更新状态
+                states[id] = {
+                    checked: true,
+                    time: newTime
+                };
+                localStorage.setItem('checkStates', JSON.stringify(states));
+                
+                // 更新显示
+                timeDisplayElement.textContent = `完成时间: ${new Date(newTime).toLocaleString()}`;
+                
+                // 恢复显示
+                timeDisplayElement.style.display = 'inline';
+                editButton.style.display = 'inline';
+                
+                // 移除输入和按钮
+                timeInput.remove();
+                saveButton.remove();
+                cancelButton.remove();
+                
+                updateAllCheckboxStates();
+            });
+            
+            // 取消编辑
+            cancelButton.addEventListener('click', function() {
+                // 恢复显示
+                timeDisplayElement.style.display = 'inline';
+                editButton.style.display = 'inline';
+                
+                // 移除输入和按钮
+                timeInput.remove();
+                saveButton.remove();
+                cancelButton.remove();
+            });
+        }
+
+        // 更新进度
+        function updateProgress() {
+            const states = JSON.parse(localStorage.getItem('checkStates')) || {};
+            let totalItems = 0;
+            let completedItems = 0;
+            
+            // 计算所有年级的总项目和已完成项目
+            for (let grade = 1; grade <= 6; grade++) {
+                const lectures = directoryData[grade];
+                lectures.forEach((lecture, lectureIndex) => {
+                    totalItems++; // 讲本身
+                    totalItems += lecture.secrets.length; // 秘籍
+                    
+                    // 检查讲是否完成
+                    const lectureId = `grade-${grade}-lecture-${lectureIndex}`;
+                    if (states[lectureId] && states[lectureId].checked) {
+                        completedItems++; // 讲完成
+                        completedItems += lecture.secrets.length; // 所有秘籍完成
+                    } else {
+                        // 检查每个秘籍是否完成
+                        lecture.secrets.forEach((secret, secretIndex) => {
+                            const secretId = `${lectureId}-secret-${secretIndex}`;
+                            if (states[secretId] && states[secretId].checked) {
+                                completedItems++; // 秘籍完成
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // 更新进度条
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${completedItems}/${totalItems} (${percentage}%)`;
+        }
+    </script>
+</body>
+</html>

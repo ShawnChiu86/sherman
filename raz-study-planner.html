@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAZ备考计划跟踪</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-color);
+            transform: translateX(-50%);
+        }
+        
+        .stage-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stage {
+            flex: 1 1 calc(50% - 20px);
+            min-width: 300px;
+        }
+        
+        .stage-title {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stage-title i {
+            margin-right: 8px;
+        }
+        
+        .tasks-container {
+            background-color: var(--card-bg);
+            border-radius: 0 0 8px 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .task-card {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .task-card:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .task-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+        
+        .raz-level {
+            background-color: var(--success-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .task-detail {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .task-materials {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .task-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        select, input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .progress-container {
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success-color);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: right;
+            font-size: 0.9rem;
+            margin-top: 3px;
+            color: #555;
+        }
+        
+        .status-not-started {
+            color: #6c757d;
+        }
+        
+        .status-in-progress {
+            color: var(--primary-color);
+        }
+        
+        .status-completed {
+            color: #28a745;
+        }
+        
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .time-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .time-label {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .stage {
+                flex: 1 1 100%;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+        }
+        
+        .save-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .save-notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RAZ备考计划跟踪</h1>
+            <p class="description">跟踪和管理您的RAZ备考进度，所有数据将保存在本地浏览器中</p>
+        </header>
+        
+        <div class="timeline">
+            <div class="stage-container" id="stages-container">
+                <!-- 阶段将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <footer>
+            <p>RAZ备考计划跟踪系统 &copy; 2023 | 数据保存在本地浏览器中</p>
+        </footer>
+    </div>
+    
+    <div class="save-notification" id="save-notification">
+        <i class="fas fa-check-circle"></i> 数据已保存！
+    </div>
+
+    <script>
+        // 初始数据（从Excel表格中提取）
+        const initialData = [
+            {
+                stage: "识字阶段",
+                taskName: "阶段一",
+                taskDetail: "AA-A ABC-READING开启",
+                razLevel: "AA-A（25天）",
+                note: "这一阶段以培养兴趣为主，从缓都快的一个过程-一定要指读-必要时倒着读",
+                materials: "开始一些中文识字、阅读",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "识字阶段",
+                taskName: "阶段二",
+                taskDetail: "给充足的时间给英语",
+                razLevel: "B-D（25天）",
+                note: "这一阶段，保证坚持每天10本，同时保证质量，打分不能过于低。要确保指读和抽查倒读",
+                materials: "中文科普快速介入、并看一些科普视频、理科类，以兴趣为主",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "识字阶段",
+                taskName: "阶段三",
+                taskDetail: "逐步变得流利起来",
+                razLevel: "E-F（20天）",
+                note: "这一阶段，坚持，同时间任务变得复杂。需要开始过单词",
+                materials: "1、过单词 2、1000词开始动手写",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "阅读书写阶段",
+                taskName: "阶段四",
+                taskDetail: "开始挑战自我",
+                razLevel: "G-H（20天）",
+                note: "从这一刻起，你开始想相信坚持的意义。但是记住，别糊弄。",
+                materials: "1、搭配fly guy、dog man验证独立阅读能力 2、不需要沉迷桥梁、初章、仅仅验证用。",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "阅读书写阶段",
+                taskName: "阶段五",
+                taskDetail: "开始准备着手写",
+                razLevel: "I-J(20天）",
+                note: "",
+                materials: "1、write right的切入，开始一些句子、短文的书写。 2、开始新东方单词过1000-2000词",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "应试准备阶段",
+                taskName: "阶段六",
+                taskDetail: "正式报名KET",
+                razLevel: "KL(40天)",
+                note: "1、会卡认知，会卡速度。解决方案，加量。",
+                materials: "1、打印KET真题 ，并做 2、听力的介入 3、Quiz的介入",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "应试准备阶段",
+                taskName: "阶段七",
+                taskDetail: "精读、听力、口语",
+                razLevel: "MN(45天）",
+                note: "1、根据真题，查看孩子的薄弱环节，跟姐答案，查漏补缺。（留2套）",
+                materials: "1、可以开始RE朗读。不做其他要求。 2、外教练习，模拟口语。 3、听力训练。",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "应试准备阶段",
+                taskName: "OPQ阶段",
+                taskDetail: "",
+                razLevel: "OPQ（2个月）",
+                note: "1、听力训练 2、结合write right 作文训练。 3、外教口语训练",
+                materials: "",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "应试准备阶段",
+                taskName: "RS阶段",
+                taskDetail: "",
+                razLevel: "RS（45天）",
+                note: "1、放缓RAZ阅读。 2、加入RE朗读。 3、扣真题细节，从会读到会理解。",
+                materials: "",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "备考阶段",
+                taskName: "冲刺U",
+                taskDetail: "真题训练",
+                razLevel: "U（一个月）",
+                note: "1、做PET真题，看差距，拓展词汇，训练逻辑",
+                materials: "",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "备考阶段",
+                taskName: "冲刺V",
+                taskDetail: "真题训练 考场模拟",
+                razLevel: "V（一个月）",
+                note: "2、最后一个月，前面留的2套，找一个时间，再现考场情景，",
+                materials: "",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            },
+            {
+                stage: "考试阶段",
+                taskName: "KET考试",
+                taskDetail: "",
+                razLevel: "3天",
+                note: "",
+                materials: "",
+                status: "未开始",
+                progress: 0,
+                createTime: "",
+                planFinishTime: "",
+                duration: 0
+            }
+        ];
+
+        // 从localStorage加载数据，如果没有则使用初始数据
+        let taskData = JSON.parse(localStorage.getItem('razPrepData')) || initialData;
+
+        // 保存数据到localStorage
+        function saveData() {
+            localStorage.setItem('razPrepData', JSON.stringify(taskData));
+            showSaveNotification();
+        }
+
+        // 显示保存成功的通知
+        function showSaveNotification() {
+            const notification = document.getElementById('save-notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // 渲染阶段和任务
+        function renderStages() {
+            const stagesContainer = document.getElementById('stages-container');
+            stagesContainer.innerHTML = '';
+            
+            // 按阶段分组
+            const stages = {};
+            taskData.forEach(task => {
+                if (!stages[task.stage]) {
+                    stages[task.stage] = [];
+                }
+                stages[task.stage].push(task);
+            });
+            
+            // 为每个阶段创建HTML
+            Object.keys(stages).forEach(stageName => {
+                const stageDiv = document.createElement('div');
+                stageDiv.className = 'stage';
+                
+                const stageTitle = document.createElement('div');
+                stageTitle.className = 'stage-title';
+                
+                // 根据阶段名称设置不同的图标
+                let iconClass = 'fas fa-book';
+                if (stageName.includes('阅读')) iconClass = 'fas fa-pen';
+                if (stageName.includes('应试')) iconClass = 'fas fa-graduation-cap';
+                if (stageName.includes('备考')) iconClass = 'fas fa-running';
+                if (stageName.includes('考试')) iconClass = 'fas fa-file-alt';
+                
+                stageTitle.innerHTML = `
+                    <span><i class="${iconClass}"></i> ${stageName}</span>
+                `;
+                
+                const tasksContainer = document.createElement('div');
+                tasksContainer.className = 'tasks-container';
+                
+                // 为每个任务创建卡片
+                stages[stageName].forEach(task => {
+                    const taskCard = document.createElement('div');
+                    taskCard.className = 'task-card';
+                    taskCard.dataset.id = taskData.indexOf(task);
+                    
+                    taskCard.innerHTML = `
+                        <div class="task-header">
+                            <div class="task-name">${task.taskName}</div>
+                            <div class="raz-level">${task.razLevel}</div>
+                        </div>
+                        <div class="task-detail">${task.taskDetail}</div>
+                        ${task.note ? `<div class="task-materials"><strong>备注:</strong> ${task.note}</div>` : ''}
+                        ${task.materials ? `<div class="task-materials"><strong>搭配材料:</strong> ${task.materials}</div>` : ''}
+                        
+                        <div class="task-controls">
+                            <div class="control-group">
+                                <label class="control-label">状态</label>
+                                <select class="status-select">
+                                    <option value="未开始" ${task.status === '未开始' ? 'selected' : ''}>未开始</option>
+                                    <option value="进行中" ${task.status === '进行中' ? 'selected' : ''}>进行中</option>
+                                    <option value="已完成" ${task.status === '已完成' ? 'selected' : ''}>已完成</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">进度 (%)</label>
+                                <input type="number" class="progress-input" min="0" max="100" value="${task.progress}">
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${task.progress}%"></div>
+                                    </div>
+                                    <div class="progress-text">${task.progress}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">计划完成时间</label>
+                                <input type="date" class="finish-time-input" value="${task.planFinishTime}">
+                            </div>
+                        </div>
+                        
+                        <div class="time-info">
+                            <div class="time-item">
+                                <span class="time-label">创建时间</span>
+                                <input type="date" class="create-time-input" value="${task.createTime}">
+                            </div>
+                            <div class="time-item">
+                                <span class="time-label">已持续 (天)</span>
+                                <span>${task.duration}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    tasksContainer.appendChild(taskCard);
+                });
+                
+                stageDiv.appendChild(stageTitle);
+                stageDiv.appendChild(tasksContainer);
+                stagesContainer.appendChild(stageDiv);
+            });
+            
+            // 添加事件监听器
+            addEventListeners();
+        }
+
+        // 添加事件监听器
+        function addEventListeners() {
+            // 状态选择
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const taskId = this.closest('.task-card').dataset.id;
+                    taskData[taskId].status = this.value;
+                    saveData();
+                });
+            });
+            
+            // 进度输入
+            document.querySelectorAll('.progress-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const taskId = this.closest('.task-card').dataset.id;
+                    const progress = parseInt(this.value) || 0;
+                    
+                    // 限制进度在0-100之间
+                    if (progress < 0) this.value = 0;
+                    if (progress > 100) this.value = 100;
+                    
+                    taskData[taskId].progress = parseInt(this.value) || 0;
+                    
+                    // 更新进度条
+                    const progressFill = this.nextElementSibling.querySelector('.progress-fill');
+                    const progressText = this.nextElementSibling.querySelector('.progress-text');
+                    progressFill.style.width = `${taskData[taskId].progress}%`;
+                    progressText.textContent = `${taskData[taskId].progress}%`;
+                    
+                    saveData();
+                });
+            });
+            
+            // 计划完成时间
+            document.querySelectorAll('.finish-time-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const taskId = this.closest('.task-card').dataset.id;
+                    taskData[taskId].planFinishTime = this.value;
+                    saveData();
+                });
+            });
+            
+            // 创建时间
+            document.querySelectorAll('.create-time-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const taskId = this.closest('.task-card').dataset.id;
+                    taskData[taskId].createTime = this.value;
+                    
+                    // 如果创建时间和计划完成时间都有，计算持续时间
+                    if (taskData[taskId].createTime && taskData[taskId].planFinishTime) {
+                        const createDate = new Date(taskData[taskId].createTime);
+                        const finishDate = new Date(taskData[taskId].planFinishTime);
+                        const duration = Math.ceil((finishDate - createDate) / (1000 * 60 * 60 * 24));
+                        taskData[taskId].duration = duration > 0 ? duration : 0;
+                        
+                        // 更新显示
+                        const durationElement = this.closest('.time-info').querySelector('.time-item:last-child span:last-child');
+                        durationElement.textContent = taskData[taskId].duration;
+                    }
+                    
+                    saveData();
+                });
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStages();
+        });
+    </script>
+</body>
+</html>

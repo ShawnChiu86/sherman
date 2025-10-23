@@ -7344,13 +7344,13 @@
         }
 
         .form-group small {
-display: block;
+            display: block;
             margin-top: 4px;
             color: #666;
             font-size: 12px;
         }
 
-        身体 {
+        .edit-modal-footer {
             padding: 0 20px 20px;
             display: flex;
             justify-content: flex-end;
@@ -7361,7 +7361,7 @@ display: block;
         .cancel-btn {
             padding: 8px 20px;
             border: none;
-border-radius: 6px;
+            border-radius: 6px;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -7373,11 +7373,11 @@ border-radius: 6px;
         }
 
         .save-btn:hover {
-background: #45a049;
+            background: #45a049;
         }
 
         .cancel-btn {
-background: #f8f9fa;
+            background: #f8f9fa;
             color: #666;
             border: 1px solid #ddd;
         }
